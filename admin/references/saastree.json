@@ -1,0 +1,64 @@
+[
+    {
+        "name": "Dashboard",
+        "url": "/service/dashboard",
+        "type": "page",
+        "isMenu": true,
+        "items": []
+    },
+    {
+        "name": "User Center",
+        "url": "/service/user",
+        "type": "entrance",
+        "isMenu": true,
+        "items": [
+            {
+                "name": "Profile",
+                "url": "/service/user/profile",
+                "type": "page",
+                "isMenu": true,
+                "items": [
+                    {
+                        "name": "EmailVerify",
+                        "url": "/service/user/emailverify",
+                        "type": "page",
+                        "isMenu": true,
+                        "items": []
+                    }
+                ]
+            },
+            {
+                "name": "Setting",
+                "url": "/service/user/setting",
+                "type": "page",
+                "isMenu": true,
+                "items": []
+            }
+        ]
+    },
+    {
+        "type": "divider"
+    },
+    {
+        "name": "Merchant Center",
+        "url": "/service/merchant",
+        "type": "entrance",
+        "isMenu": true,
+        "items": [
+            {
+                "name": "Profile",
+                "url": "/service/merchant/profile",
+                "type": "page",
+                "isMenu": true,
+                "items": []
+            },
+            {
+                "name": "Account",
+                "url": "/service/merchant/account",
+                "type": "page",
+                "isMenu": true,
+                "items": []
+            }
+        ]
+    }
+]

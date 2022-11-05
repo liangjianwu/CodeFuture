@@ -1,0 +1,13 @@
+React.js登录权限控制实现demo[亲测可用]
+https://blog.csdn.net/lllomh/article/details/107082521
+
+登录判断路由
+https://blog.csdn.net/m0_52765288/article/details/121431359?spm=1001.2101.3001.6650.1&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1-121431359-blog-107082521.pc_relevant_antiscanv2&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1-121431359-blog-107082521.pc_relevant_antiscanv2&utm_relevant_index=2
+
+
+功能记录：
+清除用户本地缓存
+设置用户可以在一个企业里是否可以独立区分数据
+    是：每个用户建立的客户及分组都是独立的，所有数据都是独立的，企业的超级管理员可以看所有的及单个人的
+    否：用户看到的都是企业的数据，不区分个人
+登录页面增加激活账号-》账号状态为2，通过重置密码功能变成1
