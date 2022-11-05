@@ -17,43 +17,49 @@ const UserProfile = model.MUserProfile
 const MerchantAuth = model.MerchantAuth
 const UserVerify = model.UserVerify
 
-module.exports.loginLoad = async (req, res) => {
-    let content = { serviceMenu: [] }
-    let menus = req.mid > 0 ? SaasMenu(): SaasFirstMenu()    
-    if (menus) {
-        content.serviceMenu = menus
-        if (req.mid > 0) {
-            return findOne(res, MerchantProfile, { id: req.mid }, (ma) => {
-                content.merchant = { name: ma.name, id: ma.id }
+module.exports.loginLoad = {
+    get: async (req, res) => {
+        let content = { serviceMenu: [] }
+        let menus = req.mid > 0 ? SaasMenu() : SaasFirstMenu()
+        if (menus) {
+            content.serviceMenu = menus
+            if (req.mid > 0) {
+                return findOne(res, MerchantProfile, { id: req.mid }, (ma) => {
+                    content.merchant = { name: ma.name, id: ma.id }
+                    return returnResult(res, content)
+                })
+            } else {
                 return returnResult(res, content)
-            })
+            }
+            //return returnResult(res, content)
         } else {
-            return returnResult(res, content)
+            return returnError(res, 910001)
         }
-        //return returnResult(res, content)
-    } else {
-        return returnError(res, 910001)
     }
 }
 
-module.exports.merchant = async (req, res) => {
-    let content = {}
-    let mu = await User.findOne({ where: { id: req.uid, status: 1 } })
-    if (mu) {
-        content.merchant = await MerchantProfile.findOne({ attributes: ["id", "name", "industry"], where: { id: mu.mid, status: 1 } })
-    }
-    return returnResult(res, content)
-}
-module.exports.merchantpwd = async (req, res) => {    
-    doWithTry(res,async ()=>{
-        let ma = await MerchantAuth.findOne({ attributes: ["id","token"], where: { mid: req.mid } })
-        if(!ma) {
-            return returnError(res,200004)
+module.exports.merchant = {
+    get: async (req, res) => {
+        let content = {}
+        let mu = await User.findOne({ where: { id: req.uid, status: 1 } })
+        if (mu) {
+            content.merchant = await MerchantProfile.findOne({ attributes: ["id", "name", "industry"], where: { id: mu.mid, status: 1 } })
         }
-        let t = ma.token.substring(ma.token.length-6)
-        //await ma.update({token:md5(ma.token)})
-        return returnResult(res, t)
-    })
+        return returnResult(res, content)
+    }
+}
+module.exports.merchantpwd = {
+    get: async (req, res) => {
+        doWithTry(res, async () => {
+            let ma = await MerchantAuth.findOne({ attributes: ["id", "token"], where: { mid: req.mid } })
+            if (!ma) {
+                return returnError(res, 200004)
+            }
+            let t = ma.token.substring(ma.token.length - 6)
+            //await ma.update({token:md5(ma.token)})
+            return returnResult(res, t)
+        })
+    }
 }
 module.exports.addcompany = async (req, res) => {
     return checkUser(req, res, async (mu, req, res) => {
@@ -80,7 +86,7 @@ module.exports.addcompany = async (req, res) => {
                 let mpa = await MerchantAuth.create({ mid: mp.id, domain: req.get('host'), token: md5(mp.id + mp.name + Date.now()) })
                 await UserAuth.update({ mid: mp.id }, { where: { user_id: mu.id } })
                 clearCache()
-                return returnResult(res, { id: mp.id, token: mpa.token.substring(mpa.token.length-6) })
+                return returnResult(res, { id: mp.id, token: mpa.token.substring(mpa.token.length - 6) })
             })
         }
     })
@@ -92,15 +98,15 @@ module.exports.joincompany = async (req, res) => {
             return returnError(res, 200001)
         } else {
             let ma = await MerchantAuth.findOne({ where: { domain: req.get('host') } })
-            if (!ma || ma.token.substring(ma.token.length-6) != req.body.token) {
+            if (!ma || ma.token.substring(ma.token.length - 6) != req.body.token) {
                 return returnError(res, 200002)
             }
             mu.mid = ma.mid
-            await mu.save()                
+            await mu.save()
             await UserAuth.update({ mid: ma.mid }, { where: { user_id: mu.id } })
             await UserProfile.update({ mid: ma.mid }, { where: { user_id: mu.id } })
             await UserVerify.update({ mid: ma.mid }, { where: { user_id: mu.id } })
-            await ma.update({token:md5(ma.token)})
+            await ma.update({ token: md5(ma.token) })
             clearCache()
             return returnResult(res, 'success')
         }

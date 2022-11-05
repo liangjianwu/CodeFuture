@@ -13,13 +13,13 @@ let js_files = files.filter((f) => {
 module.exports = {};
 
 for (let f of js_files) {
-    Log(`import model from file ${f}...`);
+    //Log(`import model from file ${f}...`);
     let name = f.substring(0, f.length - 3);
     module.exports[name] = require(__dirname + '/../models/' + f);
 }
 
 module.exports.sync = () => {
-    Log("start sync db")
+    //Log("start sync db")
     db.sequelize.sync({ force: true ,logging: Log }).then(() => {
         Log("Drop and re-sync db.");
     }).catch(err=>{

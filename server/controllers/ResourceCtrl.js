@@ -8,8 +8,8 @@ const Resource = model.Resource
 const op = db.Sequelize.Op
 const fs = require('fs');
 var pathlib = require("path");
-module.exports.upload = async(req,res)=>{
-    doWithTry(res,async()=>{
+module.exports.upload = async (req, res) => {
+    doWithTry(res, async () => {
         let form = new formidable.IncomingForm();
         form.parse(req, async (err, fields, files) => {
             try {
@@ -27,7 +27,7 @@ module.exports.upload = async(req,res)=>{
                         if (err) {
                             ErrorHint(err)
                             return returnError(res, 920002)
-                        } else {                            
+                        } else {
                             return returnResult(res, newfilename)
                         }
                     } catch (e) {
@@ -42,54 +42,57 @@ module.exports.upload = async(req,res)=>{
         })
     })
 }
-module.exports.postResource = async(req,res) =>{
-    doWithTry(res,async()=>{
-        let {id,name,description,path,type,resource_type,islocal} = req.body
+module.exports.postResource = async (req, res) => {
+    doWithTry(res, async () => {
+        let { id, name, description, path, type, resource_type, islocal } = req.body
         let resource = null
-        if(id > 0) {
-            await Resource.update({name,description,path,type,resource_type,islocal},{where:{id:id,status:1}})
-        }else {
-            resource = await Resource.create({name,description,path,type,resource_type,islocal,mid:req.mid})            
+        if (id > 0) {
+            await Resource.update({ name, description, path, type, resource_type, islocal }, { where: { id: id, status: 1 } })
+        } else {
+            resource = await Resource.create({ name, description, path, type, resource_type, islocal, mid: req.mid })
             id = resource.id
         }
-        return returnResult(res,id)
+        return returnResult(res, id)
     })
 }
 
-module.exports.changeStatus = async(req,res) => {
-    doWithTry(res,async()=>{
-        let {id,status} = req.body
-        let f = await Resource.findOne({where:{id:id}})        
-        if(f ) {
+module.exports.changeStatus = async (req, res) => {
+    doWithTry(res, async () => {
+        let { id, status } = req.body
+        let f = await Resource.findOne({ where: { id: id } })
+        if (f) {
             f.status = status
             await f.save()
-            return returnResult(res,'')
-        }else {
-            return returnError(res,900001)
+            return returnResult(res, '')
+        } else {
+            return returnError(res, 900001)
         }
     })
 }
 
-module.exports.loadResources = async(req,res)=>{
-    doWithTry(res,async()=>{
-        let {type,page,pagesize,countdata} = req.query
-        let retdata = {total:0,data:[]}
-        if(countdata == 1) {
-            retdata.total = await Resource.count({where:{mid:req.mid,type:type,status:1}})
-        }
-        retdata.data = await Resource.findAll({where:{mid:req.mid,type:type,status:1},order:[['id','desc']],limit:Number(pagesize),offset:Number(pagesize)*Number(page)})
-        return returnResult(res,retdata)
-    })
-}
-
-module.exports.photo = async(req,res)=>{
-    
-    let {file} = req.query
-    let a = file.split('.')
-    if(a.length != 2 || isNaN(a[0]) || (a[1] != 'jpg' && a[1] != 'jpeg' && a[1] != 'png')) {
-        return returnError(res,900001)
+module.exports.loadResources = {
+    get: async (req, res) => {
+        doWithTry(res, async () => {
+            let { type, page, pagesize, countdata } = req.query
+            let retdata = { total: 0, data: [] }
+            if (countdata == 1) {
+                retdata.total = await Resource.count({ where: { mid: req.mid, type: type, status: 1 } })
+            }
+            retdata.data = await Resource.findAll({ where: { mid: req.mid, type: type, status: 1 }, order: [['id', 'desc']], limit: Number(pagesize), offset: Number(pagesize) * Number(page) })
+            return returnResult(res, retdata)
+        })
     }
-    // res.setHeader("Content-Type", "image/jpeg,image/png")
-    res.sendFile(pathlib.resolve('/home/rcboy_liang/codefuture/www/server/upload/'+file))
+}
+module.exports.photo = {
+    get: async (req, res) => {
 
+        let { file } = req.query
+        let a = file.split('.')
+        if (a.length != 2 || isNaN(a[0]) || (a[1] != 'jpg' && a[1] != 'jpeg' && a[1] != 'png')) {
+            return returnError(res, 900001)
+        }
+        // res.setHeader("Content-Type", "image/jpeg,image/png")
+        res.sendFile(pathlib.resolve('/home/rcboy_liang/codefuture/www/server/upload/' + file))
+
+    }
 }

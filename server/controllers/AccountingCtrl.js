@@ -17,49 +17,52 @@ const UserBalanceRecord = model.UserBalanceRecord
 const MemberGroup = model.MemberGroup
 const Group = model.Group
 const op = db.Sequelize.Op
-module.exports.loginLoad = async (req, res) => {
-    let content = { serviceMenu: [] }
-    let menus = await loadMenu(req.uid, AppsList.accounting.appid)
-    if (menus) {
-        content.serviceMenu = menus
-        return returnResult(res, content)
-    } else {
-        return returnError(res, 910001)
+module.exports.loginLoad = {
+    get: async (req, res) => {
+        let content = { serviceMenu: [] }
+        let menus = await loadMenu(req.uid, AppsList.accounting.appid)
+        if (menus) {
+            content.serviceMenu = menus
+            return returnResult(res, content)
+        } else {
+            return returnError(res, 910001)
+        }
     }
 }
-
-module.exports.loadMembers = async (req, res) => {
-    let { page, pagesize, countdata } = req.query
-    pagesize = Number(pagesize)
-    page = Number(page)
-    let uid = req.uid
-    doWithTry(res, async () => {
-        let where = { mid: req.mid, status: { [op.ne]: 3 } }
-        let ret = { total: 0 }
-        Member.hasMany(UserBalance, { foreignKey: 'user_id', sourceKey: 'user_id', targetKey: 'user_id' })
-        Member.belongsTo(UserProfile, { foreignKey: 'user_id', targetKey: 'user_id' })
-        Member.belongsTo(User, { foreignKey: "user_id" })
-        if (countdata) {
-            ret.total = await Member.count({
-                where: where, include: [
-                    { model: User, where: { status: { [op.ne]: 3 } } }
-                ]
+module.exports.loadMembers = {
+    get: async (req, res) => {
+        let { page, pagesize, countdata } = req.query
+        pagesize = Number(pagesize)
+        page = Number(page)
+        let uid = req.uid
+        doWithTry(res, async () => {
+            let where = { mid: req.mid, status: { [op.ne]: 3 } }
+            let ret = { total: 0 }
+            Member.hasMany(UserBalance, { foreignKey: 'user_id', sourceKey: 'user_id', targetKey: 'user_id' })
+            Member.belongsTo(UserProfile, { foreignKey: 'user_id', targetKey: 'user_id' })
+            Member.belongsTo(User, { foreignKey: "user_id" })
+            if (countdata) {
+                ret.total = await Member.count({
+                    where: where, include: [
+                        { model: User, where: { status: { [op.ne]: 3 } } }
+                    ]
+                })
+            }
+            //ret.data = await db.sequelize.query('select A.id,A.membership,B.lastname,B.name,A.create_time,A.status,B.City from merchant_customer A,customer B where:where,order:'id desc',limit:pagesize,offset:page*pagesize})        
+            ret.data = await Member.findAll({
+                attributes: ['id', 'user_id', 'birthday', 'gender', 'name', 'status', 'level'],
+                where: where,
+                include: [
+                    { model: UserBalance, where: { status: 1, mid: req.mid }, attributes: ['balance', 'type', 'member_id', 'update_time'], required: false },
+                    { model: UserProfile, attributes: ['name', 'phone'] },
+                    { model: User, attributes: ['id'], where: { status: 1 } }
+                ],
+                order: [['id', 'desc']],
+                limit: pagesize, offset: page * pagesize,
             })
-        }
-        //ret.data = await db.sequelize.query('select A.id,A.membership,B.lastname,B.name,A.create_time,A.status,B.City from merchant_customer A,customer B where:where,order:'id desc',limit:pagesize,offset:page*pagesize})        
-        ret.data = await Member.findAll({
-            attributes: ['id', 'user_id', 'birthday', 'gender', 'name', 'status', 'level'],
-            where: where,
-            include: [
-                { model: UserBalance, where: { status: 1, mid: req.mid }, attributes: ['balance', 'type', 'member_id', 'update_time'], required: false },
-                { model: UserProfile, attributes: ['name', 'phone'] },
-                { model: User, attributes: ['id'], where: { status: 1 } }
-            ],
-            order: [['id', 'desc']],
-            limit: pagesize, offset: page * pagesize,
+            return returnResult(res, ret)
         })
-        return returnResult(res, ret)
-    })
+    }
 }
 // module.exports.loadGroups = async (req, res) => {
 //     doWithTry(res, async () => {
@@ -97,50 +100,51 @@ module.exports.loadMembers = async (req, res) => {
 //         return returnResult(res, ret)
 //     })
 // }
-module.exports.loadFamilys = async (req, res) => {
-    let { page, pagesize, countdata, orderfield, order, type } = req.query
-    type = type ? type : 'privateclass'
-    pagesize = Number(pagesize)
-    page = Number(page)
-    doWithTry(res, async () => {
-        let where = { mid: req.mid, status: 1 }
-        let ret = { total: 0 }
-        if (countdata) {
-            ret.total = await User.count({ where: where })
-        }
-        User.hasOne(UserBalance, { foreignKey: 'user_id' })
-        //User.hasMany(Member, { foreignKey: 'user_id' })
-        User.hasOne(UserProfile, { foreignKey: 'user_id' })
-        let orderdesc = [['id', order]]
-        if (orderfield == 'parent') {
-            orderdesc = [[UserProfile, 'name', order]]
-        } else if (orderfield == 'balance') {
-            orderdesc = [[UserBalance, 'balance', order]]
-        }
-        ret.data = await User.findAll({
-            attributes: ['id'],
-            where: where,
-            include: [
-                { model: UserProfile, attributes: ['user_id', 'name', 'phone'] },
-                { model: UserBalance, where: { status: 1, mid: req.mid, type: type }, attributes: ['balance', 'type', 'member_id', 'update_time'], required: false },
-                //{ model: Member, attributes: ['id', 'name'], where: { status: 1, mid: req.mid }, required: false },                
-            ],
-            order: orderdesc,
-            limit: pagesize, offset: page * pagesize,
+module.exports.loadFamilys = {
+    get: async (req, res) => {
+        let { page, pagesize, countdata, orderfield, order, type } = req.query
+        type = type ? type : 'privateclass'
+        pagesize = Number(pagesize)
+        page = Number(page)
+        doWithTry(res, async () => {
+            let where = { mid: req.mid, status: 1 }
+            let ret = { total: 0 }
+            if (countdata) {
+                ret.total = await User.count({ where: where })
+            }
+            User.hasOne(UserBalance, { foreignKey: 'user_id' })
+            //User.hasMany(Member, { foreignKey: 'user_id' })
+            User.hasOne(UserProfile, { foreignKey: 'user_id' })
+            let orderdesc = [['id', order]]
+            if (orderfield == 'parent') {
+                orderdesc = [[UserProfile, 'name', order]]
+            } else if (orderfield == 'balance') {
+                orderdesc = [[UserBalance, 'balance', order]]
+            }
+            ret.data = await User.findAll({
+                attributes: ['id'],
+                where: where,
+                include: [
+                    { model: UserProfile, attributes: ['user_id', 'name', 'phone'] },
+                    { model: UserBalance, where: { status: 1, mid: req.mid, type: type }, attributes: ['balance', 'type', 'member_id', 'update_time'], required: false },
+                    //{ model: Member, attributes: ['id', 'name'], where: { status: 1, mid: req.mid }, required: false },                
+                ],
+                order: orderdesc,
+                limit: pagesize, offset: page * pagesize,
+            })
+            let ids = []
+            ret.data.map((row) => {
+                ids.push(row.id)
+            })
+            ret.members = await Member.findAll({ attributes: ['id', 'user_id', 'name', 'status', 'level'], where: { user_id: ids, status: { [op.ne]: 3 } } })
+            ret.balance = await UserBalance.sum('balance', {
+                where: { mid: req.mid, status: 1, type: type },
+                //attributes: [[db.Sequelize.fn('sum', db.Sequelize.col('balance')), 'balance']]
+            })
+            return returnResult(res, ret)
         })
-        let ids = []
-        ret.data.map((row) => {
-            ids.push(row.id)
-        })
-        ret.members = await Member.findAll({ attributes: ['id', 'user_id', 'name', 'status', 'level'], where: { user_id: ids, status: { [op.ne]: 3 } } })
-        ret.balance = await UserBalance.sum('balance', {
-            where: { mid: req.mid, status: 1, type: type },
-            //attributes: [[db.Sequelize.fn('sum', db.Sequelize.col('balance')), 'balance']]
-        })
-        return returnResult(res, ret)
-    })
+    }
 }
-
 
 module.exports.recharge = async (req, res) => {
     let { customerid, familyid, amount, type, note, date, invoice } = req.body
@@ -387,73 +391,74 @@ module.exports.charge = async (req, res) => {
         })
     })
 }
-module.exports.loadtransactions = async (req, res) => {
-    const { fid, kid, page, pagesize, countdata, orderfield, order, coache, product, from, to } = req.query
-    doWithTry(res, async () => {
-        UserBalanceRecord.hasOne(Member, { sourceKey: 'member_id', foreignKey: "id" })
-        UserBalanceRecord.hasOne(UserProfile, { sourceKey: 'user_id', foreignKey: "user_id" })
-        UserBalanceRecord.hasOne(UserBalance, { sourceKey: 'balance_id', foreignKey: "id" })
-        UserBalanceRecord.hasOne(UserOrder, { sourceKey: 'order', foreignKey: "id" })
-        let where = { mid: req.mid, status: 1 }
-        if (fid > 0) {
-            where.user_id = fid
-        }
-        if (fid > 0 && kid > 0) {
-            where.member_id = kid
-        }
-        let owhere = { mid: req.mid }
-        if (coache > 0) {
-            owhere.coach_id = coache
-        }
-        if (product > 0) {
-            owhere.product_id = product
-        }
-        if ((coache > 0 || product > 0) && from && to) {
-            let from1 = new Date(from).toUTCString()
-            let to1 = new Date(to).toUTCString()
-            owhere.order_date = { [op.between]: [from1, to1] }
-        }
-        let retdata = { total: 0, data: [] }
-        if (countdata == 1) {
-            retdata.total = await UserBalanceRecord.count({
+module.exports.loadtransactions = {
+    get: async (req, res) => {
+        const { fid, kid, page, pagesize, countdata, orderfield, order, coache, product, from, to } = req.query
+        doWithTry(res, async () => {
+            UserBalanceRecord.hasOne(Member, { sourceKey: 'member_id', foreignKey: "id" })
+            UserBalanceRecord.hasOne(UserProfile, { sourceKey: 'user_id', foreignKey: "user_id" })
+            UserBalanceRecord.hasOne(UserBalance, { sourceKey: 'balance_id', foreignKey: "id" })
+            UserBalanceRecord.hasOne(UserOrder, { sourceKey: 'order', foreignKey: "id" })
+            let where = { mid: req.mid, status: 1 }
+            if (fid > 0) {
+                where.user_id = fid
+            }
+            if (fid > 0 && kid > 0) {
+                where.member_id = kid
+            }
+            let owhere = { mid: req.mid }
+            if (coache > 0) {
+                owhere.coach_id = coache
+            }
+            if (product > 0) {
+                owhere.product_id = product
+            }
+            if ((coache > 0 || product > 0) && from && to) {
+                let from1 = new Date(from).toUTCString()
+                let to1 = new Date(to).toUTCString()
+                owhere.order_date = { [op.between]: [from1, to1] }
+            }
+            let retdata = { total: 0, data: [] }
+            if (countdata == 1) {
+                retdata.total = await UserBalanceRecord.count({
+                    where: where,
+                    include: [{ model: UserOrder, where: owhere }]
+                })
+            }
+            let orderdesc = orderfield == 'create_time' ? [[UserOrder, 'order_date', order], ['id', order]] : (orderfield == 'parent' ? [[UserProfile, 'name', order], ['id', order]] : (orderfield == 'name' ? [[Member, 'name', order], ['id', order]] : [['id', order]]))
+            let ts = await UserBalanceRecord.findAll({
+                attributes: ["id", "balance_id", "user_id", "member_id", "amount", "pre_balance", "action", "note", "refer", "invoice", "create_time", "status"],
                 where: where,
-                include: [{ model: UserOrder, where: owhere }]
+                include: [
+                    { model: Member, attributes: ["name", "status", 'level'], required: false },
+                    { model: UserProfile, attributes: ["name"] },
+                    { model: UserBalance, attributes: ["type"] },
+                    { model: UserOrder, where: owhere },
+                ],
+                order: orderdesc,
+                limit: pagesize * 1,
+                offset: page * pagesize,
             })
-        }
-        let orderdesc = orderfield == 'create_time' ? [[UserOrder, 'order_date', order], ['id', order]] : (orderfield == 'parent' ? [[UserProfile, 'name', order], ['id', order]] : (orderfield == 'name' ? [[Member, 'name', order], ['id', order]] : [['id', order]]))
-        let ts = await UserBalanceRecord.findAll({
-            attributes: ["id", "balance_id", "user_id", "member_id", "amount", "pre_balance", "action", "note", "refer", "invoice", "create_time", "status"],
-            where: where,
-            include: [
-                { model: Member, attributes: ["name", "status", 'level'], required: false },
-                { model: UserProfile, attributes: ["name"] },
-                { model: UserBalance, attributes: ["type"] },
-                { model: UserOrder, where: owhere },
-            ],
-            order: orderdesc,
-            limit: pagesize * 1,
-            offset: page * pagesize,
-        })
-        ts && ts.map(t => {
-            retdata.data.push({
-                id: t.id, amount: t.amount, prebalance: t.pre_balance, balance: (Number(t.pre_balance) + Number(t.amount)).toFixed(2),
-                subject: t.action, note: t.note, refer: t.refer, invoice: t.invoice, status: t.status,
-                create_time: t.create_time,
-                name: t.member?.name,
-                mstatus: t.member?.status,
-                level: t.member?.level,
-                parent: t.user_profile.name,
-                balancetype: t.user_balance ? t.user_balance.type : "other",
-                member_id: t.member_id,
-                user_id: t.user_id,
-                order: t.user_order,
+            ts && ts.map(t => {
+                retdata.data.push({
+                    id: t.id, amount: t.amount, prebalance: t.pre_balance, balance: (Number(t.pre_balance) + Number(t.amount)).toFixed(2),
+                    subject: t.action, note: t.note, refer: t.refer, invoice: t.invoice, status: t.status,
+                    create_time: t.create_time,
+                    name: t.member?.name,
+                    mstatus: t.member?.status,
+                    level: t.member?.level,
+                    parent: t.user_profile.name,
+                    balancetype: t.user_balance ? t.user_balance.type : "other",
+                    member_id: t.member_id,
+                    user_id: t.user_id,
+                    order: t.user_order,
+                })
             })
+            return returnResult(res, retdata)
         })
-        return returnResult(res, retdata)
-    })
 
+    }
 }
-
 const loadReferAmount = async (refer) => {
     let refers = await UserBalanceRecord.findAll({ where: { refer: refer, status: 1 } })
     let amount = 0
@@ -619,191 +624,195 @@ module.exports.refund = async (req, res) => {
     })
 }
 
-module.exports.getGroupMembers = async (req, res) => {
-    let { id, page, pagesize, countdata } = req.query
-    doWithTry(res, async () => {
-        Member.belongsTo(MemberGroup, { foreignKey: "id", targetKey: 'member_id' })
-        Member.belongsTo(UserProfile, { foreignKey: "user_id", targetKey: 'user_id' })
-        Member.belongsTo(User, { foreignKey: "user_id" })
-        Member.hasMany(UserBalance, { sourceKey: "user_id", foreignKey: 'user_id' })
-        let retdata = { total: 0, data: [] }
-        if (countdata == 1) {
-            retdata.total = await Member.count({
+module.exports.getGroupMembers = {
+    get: async (req, res) => {
+        let { id, page, pagesize, countdata } = req.query
+        doWithTry(res, async () => {
+            Member.belongsTo(MemberGroup, { foreignKey: "id", targetKey: 'member_id' })
+            Member.belongsTo(UserProfile, { foreignKey: "user_id", targetKey: 'user_id' })
+            Member.belongsTo(User, { foreignKey: "user_id" })
+            Member.hasMany(UserBalance, { sourceKey: "user_id", foreignKey: 'user_id' })
+            let retdata = { total: 0, data: [] }
+            if (countdata == 1) {
+                retdata.total = await Member.count({
+                    where: { mid: req.mid, status: { [op.ne]: 3 } },
+                    include: [{
+                        model: MemberGroup,
+                        where: { mid: req.mid, group_id: id, status: 1 },
+                    }, {
+                        model: User, attributes: ['id'], where: { status: 1 }
+                    }]
+                })
+            }
+            retdata.data = await Member.findAll({
+                attributes: ['id', 'name', 'user_id', 'status'],
                 where: { mid: req.mid, status: { [op.ne]: 3 } },
                 include: [{
                     model: MemberGroup,
+                    attributes: ['member_id'],
                     where: { mid: req.mid, group_id: id, status: 1 },
                 }, {
+                    model: UserBalance, where: { status: 1, mid: req.mid }, attributes: ['balance', 'type', 'member_id', 'update_time'], required: false
+                }, {
+                    model: UserProfile, attributes: ['name']
+                }, {
                     model: User, attributes: ['id'], where: { status: 1 }
-                }]
+                }
+                ], order: [['id', 'desc']], limit: 1 * pagesize, offset: page * pagesize
             })
-        }
-        retdata.data = await Member.findAll({
-            attributes: ['id', 'name', 'user_id', 'status'],
-            where: { mid: req.mid, status: { [op.ne]: 3 } },
-            include: [{
-                model: MemberGroup,
-                attributes: ['member_id'],
-                where: { mid: req.mid, group_id: id, status: 1 },
-            }, {
-                model: UserBalance, where: { status: 1, mid: req.mid }, attributes: ['balance', 'type', 'member_id', 'update_time'], required: false
-            }, {
-                model: UserProfile, attributes: ['name']
-            }, {
-                model: User, attributes: ['id'], where: { status: 1 }
-            }
-            ], order: [['id', 'desc']], limit: 1 * pagesize, offset: page * pagesize
+            return returnResult(res, retdata)
         })
-        return returnResult(res, retdata)
-    })
+    }
 }
+module.exports.searchMembers = {
+    get: async (req, res) => {
+        const { value, page, pagesize, countdata } = req.query
 
-module.exports.searchMembers = async (req, res) => {
-    const { value, page, pagesize, countdata } = req.query
+        doWithTry(res, async () => {
+            Member.belongsTo(UserProfile, { foreignKey: "user_id", targetKey: 'user_id' })
+            Member.belongsTo(User, { foreignKey: "user_id" })
+            Member.hasMany(UserBalance, { sourceKey: "user_id", foreignKey: 'user_id' })
+            let retdata = { total: 0, data: [] }
+            if (countdata == 1) {
+                retdata.total = await Member.count({
+                    where: {
+                        mid: req.mid,
+                        status: { [op.ne]: 3 },
+                        name: { [op.like]: `%${value}%` },
+                    },
+                    include: [{
+                        model: User, attributes: ['id'], where: { status: 1 }
+                    }],
+                })
+            }
 
-    doWithTry(res, async () => {
-        Member.belongsTo(UserProfile, { foreignKey: "user_id", targetKey: 'user_id' })
-        Member.belongsTo(User, { foreignKey: "user_id" })
-        Member.hasMany(UserBalance, { sourceKey: "user_id", foreignKey: 'user_id' })
-        let retdata = { total: 0, data: [] }
-        if (countdata == 1) {
-            retdata.total = await Member.count({
+            retdata.data = await Member.findAll({
+                attributes: ['id', 'name', 'status', 'level'],
                 where: {
                     mid: req.mid,
                     status: { [op.ne]: 3 },
                     name: { [op.like]: `%${value}%` },
                 },
                 include: [{
+                    model: UserBalance, where: { status: 1, mid: req.mid }, attributes: ['balance', 'type', 'member_id', 'update_time'], required: false
+                }, {
+                    model: UserProfile, attributes: ['name']
+                }, {
                     model: User, attributes: ['id'], where: { status: 1 }
                 }],
+                order: [["id", "desc"]],
+                limit: pagesize * 1,
+                offset: page * pagesize,
             })
-        }
-
-        retdata.data = await Member.findAll({
-            attributes: ['id', 'name', 'status', 'level'],
-            where: {
-                mid: req.mid,
-                status: { [op.ne]: 3 },
-                name: { [op.like]: `%${value}%` },
-            },
-            include: [{
-                model: UserBalance, where: { status: 1, mid: req.mid }, attributes: ['balance', 'type', 'member_id', 'update_time'], required: false
-            }, {
-                model: UserProfile, attributes: ['name']
-            }, {
-                model: User, attributes: ['id'], where: { status: 1 }
-            }],
-            order: [["id", "desc"]],
-            limit: pagesize * 1,
-            offset: page * pagesize,
+            return returnResult(res, retdata)
         })
-        return returnResult(res, retdata)
-    })
+    }
 }
+module.exports.searchFamilys = {
+    get: async (req, res) => {
+        const { value, page, pagesize, countdata } = req.query
 
-module.exports.searchFamilys = async (req, res) => {
-    const { value, page, pagesize, countdata } = req.query
-
-    doWithTry(res, async () => {
-        User.hasOne(UserBalance, { foreignKey: 'user_id' })
-        User.hasMany(Member, { foreignKey: 'user_id' })
-        User.hasOne(UserProfile, { foreignKey: 'user_id' })
-        let retdata = { total: 0, data: [] }
-        if (countdata == 1) {
-            retdata.total = await User.count({
+        doWithTry(res, async () => {
+            User.hasOne(UserBalance, { foreignKey: 'user_id' })
+            User.hasMany(Member, { foreignKey: 'user_id' })
+            User.hasOne(UserProfile, { foreignKey: 'user_id' })
+            let retdata = { total: 0, data: [] }
+            if (countdata == 1) {
+                retdata.total = await User.count({
+                    where: {
+                        mid: req.mid,
+                        status: 1,
+                    },
+                    include: [{
+                        model: UserProfile,
+                        where: {
+                            [op.or]: [
+                                { name: { [op.like]: `%${value}%` } },
+                                { kids: { [op.like]: `%${value}%` } },
+                                { email: { [op.like]: `%${value}%` } },
+                                { phone: { [op.like]: `%${value}%` } },
+                            ]
+                        }
+                    }]
+                })
+            }
+            retdata.data = await User.findAll({
+                attributes: ['id'],
                 where: {
                     mid: req.mid,
                     status: 1,
                 },
-                include: [{
-                    model: UserProfile,
-                    where: {
-                        [op.or]: [
-                            { name: { [op.like]: `%${value}%` } },
-                            { kids: { [op.like]: `%${value}%` } },
-                            { email: { [op.like]: `%${value}%` } },
-                            { phone: { [op.like]: `%${value}%` } },
-                        ]
+                include: [
+                    { model: UserBalance, where: { status: 1, mid: req.mid, type: 'privateclass' }, attributes: ['balance', 'type', 'member_id', 'update_time'], required: false },
+                    { model: Member, attributes: ['id', 'name', 'status', 'level'], where: { status: { [op.ne]: 3 }, mid: req.mid }, required: false },
+                    {
+                        model: UserProfile, attributes: ['name', 'phone', 'user_id'], where: {
+                            [op.or]: [
+                                { name: { [op.like]: `%${value}%` } },
+                                { kids: { [op.like]: `%${value}%` } },
+                                { email: { [op.like]: `%${value}%` } },
+                                { phone: { [op.like]: `%${value}%` } },
+                            ]
+                        }
                     }
-                }]
+                ],
+                order: [['id', 'desc']],
+                limit: Number(pagesize), offset: Number(page) * Number(pagesize),
             })
-        }
-        retdata.data = await User.findAll({
-            attributes: ['id'],
-            where: {
-                mid: req.mid,
-                status: 1,
-            },
-            include: [
-                { model: UserBalance, where: { status: 1, mid: req.mid, type: 'privateclass' }, attributes: ['balance', 'type', 'member_id', 'update_time'], required: false },
-                { model: Member, attributes: ['id', 'name', 'status', 'level'], where: { status: { [op.ne]: 3 }, mid: req.mid }, required: false },
-                {
-                    model: UserProfile, attributes: ['name', 'phone', 'user_id'], where: {
-                        [op.or]: [
-                            { name: { [op.like]: `%${value}%` } },
-                            { kids: { [op.like]: `%${value}%` } },
-                            { email: { [op.like]: `%${value}%` } },
-                            { phone: { [op.like]: `%${value}%` } },
-                        ]
-                    }
-                }
-            ],
-            order: [['id', 'desc']],
-            limit: Number(pagesize), offset: Number(page) * Number(pagesize),
+            return returnResult(res, retdata)
         })
-        return returnResult(res, retdata)
-    })
 
+    }
 }
-
-module.exports.getReport = async (req, res) => {
-    let { from, to, orderfield, order } = req.query
-    let from1 = new Date(from).toUTCString()
-    let to1 = new Date(to).toUTCString()
-    doWithTry(res, async () => {
-        UserBalanceRecord.hasOne(UserProfile, { sourceKey: 'user_id', foreignKey: "user_id" })
-        UserBalanceRecord.hasOne(UserOrder, { sourceKey: 'order', foreignKey: "id" })
-        let where = { mid: req.mid, status: 1 }
-        let retdata = {}
-        retdata.logs = await UserBalanceRecord.findAll({
-            attributes: ["id", "user_id", "amount", "invoice", "note", "refer", "create_time"],
-            where: where,
-            include: [
-                { model: UserProfile, attributes: ["name", 'user_id'] },
-                { model: UserOrder, where: { product_id: 0, order_date: { [op.between]: [from1, to1] } } },
-            ],
-            order: orderfield == 'parent' ? [[UserProfile, 'name', order]] : [[UserOrder, 'order_date', order ? order : 'desc']],
-            limit: 500,
-        })
-        if (!orderfield && !order) {
-            retdata.recharged = 0
-            let rechargeuserids = []
-            retdata.logs.map(log => {
-                if (rechargeuserids.indexOf(log.user_id) < 0) {
-                    rechargeuserids.push(log.user_id)
+module.exports.getReport = {
+    get: async (req, res) => {
+        let { from, to, orderfield, order } = req.query
+        let from1 = new Date(from).toUTCString()
+        let to1 = new Date(to).toUTCString()
+        doWithTry(res, async () => {
+            UserBalanceRecord.hasOne(UserProfile, { sourceKey: 'user_id', foreignKey: "user_id" })
+            UserBalanceRecord.hasOne(UserOrder, { sourceKey: 'order', foreignKey: "id" })
+            let where = { mid: req.mid, status: 1 }
+            let retdata = {}
+            retdata.logs = await UserBalanceRecord.findAll({
+                attributes: ["id", "user_id", "amount", "invoice", "note", "refer", "create_time"],
+                where: where,
+                include: [
+                    { model: UserProfile, attributes: ["name", 'user_id'] },
+                    { model: UserOrder, where: { product_id: 0, order_date: { [op.between]: [from1, to1] } } },
+                ],
+                order: orderfield == 'parent' ? [[UserProfile, 'name', order]] : [[UserOrder, 'order_date', order ? order : 'desc']],
+                limit: 500,
+            })
+            if (!orderfield && !order) {
+                retdata.recharged = 0
+                let rechargeuserids = []
+                retdata.logs.map(log => {
+                    if (rechargeuserids.indexOf(log.user_id) < 0) {
+                        rechargeuserids.push(log.user_id)
+                    }
+                    retdata.recharged += Number(log.amount)
+                })
+                retdata.rechargedFamilies = rechargeuserids.length
+                retdata.charged = await UserOrder.sum('amount', {
+                    where: { mid: req.mid, product_id: { [op.ne]: 0 }, order_date: { [op.between]: [from1, to1] } },
+                })
+                // retdata.minutes = await UserOrder.sum(db.sequelize.literal('count/peoples'), {
+                //     where: { mid: req.mid, product_id: { [op.ne]: 0 }, amount: { [op.ne]: 0 }, order_date: { [op.between]: [from1, to1] } },
+                // })
+                let mm = await db.sequelize.query('select sum(count/peoples) as count from user_order where mid=' + req.mid + ' and product_id != 0 and amount != 0 and order_date between "' + from + '" and "' + to + '"')
+                //Debug(mm)
+                if (mm && mm.length > 0) {
+                    retdata.minutes = mm[0][0].count
+                } else {
+                    retdata.minutes = 0
                 }
-                retdata.recharged += Number(log.amount)
-            })
-            retdata.rechargedFamilies = rechargeuserids.length
-            retdata.charged = await UserOrder.sum('amount', {
-                where: { mid: req.mid, product_id: { [op.ne]: 0 }, order_date: { [op.between]: [from1, to1] } },
-            })
-            // retdata.minutes = await UserOrder.sum(db.sequelize.literal('count/peoples'), {
-            //     where: { mid: req.mid, product_id: { [op.ne]: 0 }, amount: { [op.ne]: 0 }, order_date: { [op.between]: [from1, to1] } },
-            // })
-            let mm = await db.sequelize.query('select sum(count/peoples) as count from user_order where mid=' + req.mid + ' and product_id != 0 and amount != 0 and order_date between "' + from + '" and "' + to + '"')
-            //Debug(mm)
-            if (mm && mm.length > 0) {
-                retdata.minutes = mm[0][0].count
-            } else {
-                retdata.minutes = 0
+                //retdata.charged = retdata.charged[0].amount
             }
-            //retdata.charged = retdata.charged[0].amount
-        }
-        return returnResult(res, retdata)
-    })
+            return returnResult(res, retdata)
+        })
+    }
 }
-
 // module.exports.getReport1 = async (req, res) => {
 //     let { from, to, orderfield, order } = req.query
 //     let from1 = new Date(from).toUTCString()
@@ -869,65 +878,69 @@ module.exports.getReport = async (req, res) => {
 //     })
 // }
 
-module.exports.getBalanceSnapshot = async (req, res) => {
-    let { page, pagesize, countdata, orderfield, order, type, snap_date } = req.query
-    type = type ? type : 'privateclass'
-    pagesize = Number(pagesize)
-    page = Number(page)
-    snap_date = new Date(snap_date).toISOString().substring(0, 10)
-    doWithTry(res, async () => {
-        // let maxDate = await UserBalanceSnapshot.findAll({where:{snap_date:{[op.lte]:snap_date}},attributes: [[db.Sequelize.fn('max', db.Sequelize.col('snap_date')), 'maxDate']]})
-        // maxDate = maxDate[0]['maxDate']
-        // Debug(maxDate[0]['maxDate'])
-        let maxDate = await UserBalanceSnapshot.max('snap_date', { where: { snap_date: { [op.lte]: snap_date } } })
-        if (!maxDate) {
-            return returnResult(res, { total: 0, members: [], balance: 0, data: [] })
-        }
-        let where = { mid: req.mid, status: 1 }
-        let ret = { total: 0 }
-        if (countdata) {
-            ret.total = await User.count({ where: where })
-        }
-        User.hasOne(UserBalanceSnapshot, { foreignKey: 'user_id' })
-        //User.hasMany(Member, { foreignKey: 'user_id' })
-        User.hasOne(UserProfile, { foreignKey: 'user_id' })
-        let orderdesc = [['id', order]]
-        if (orderfield == 'parent') {
-            orderdesc = [[UserProfile, 'name', order]]
-        } else if (orderfield == 'balance') {
-            orderdesc = [[UserBalanceSnapshot, 'balance', order]]
-        }
-        ret.data = await User.findAll({
-            attributes: ['id'],
-            where: where,
-            include: [
-                { model: UserProfile, attributes: ['user_id', 'name', 'phone'] },
-                { model: UserBalanceSnapshot, where: { status: 1, mid: req.mid, type: type, snap_date: maxDate }, attributes: ['balance', 'type', 'member_id', 'update_time', 'snap_date'], required: false },
-                //{ model: Member, attributes: ['id', 'name'], where: { status: 1, mid: req.mid }, required: false },                
-            ],
-            order: orderdesc,
-            limit: pagesize, offset: page * pagesize,
+module.exports.balancesnapshot = {
+    get: async (req, res) => {
+        let { page, pagesize, countdata, orderfield, order, type, snap_date } = req.query
+        type = type ? type : 'privateclass'
+        pagesize = Number(pagesize)
+        page = Number(page)
+        snap_date = new Date(snap_date).toISOString().substring(0, 10)
+        doWithTry(res, async () => {
+            // let maxDate = await UserBalanceSnapshot.findAll({where:{snap_date:{[op.lte]:snap_date}},attributes: [[db.Sequelize.fn('max', db.Sequelize.col('snap_date')), 'maxDate']]})
+            // maxDate = maxDate[0]['maxDate']
+            // Debug(maxDate[0]['maxDate'])
+            let maxDate = await UserBalanceSnapshot.max('snap_date', { where: { snap_date: { [op.lte]: snap_date } } })
+            if (!maxDate) {
+                return returnResult(res, { total: 0, members: [], balance: 0, data: [] })
+            }
+            let where = { mid: req.mid, status: 1 }
+            let ret = { total: 0 }
+            if (countdata) {
+                ret.total = await User.count({ where: where })
+            }
+            User.hasOne(UserBalanceSnapshot, { foreignKey: 'user_id' })
+            //User.hasMany(Member, { foreignKey: 'user_id' })
+            User.hasOne(UserProfile, { foreignKey: 'user_id' })
+            let orderdesc = [['id', order]]
+            if (orderfield == 'parent') {
+                orderdesc = [[UserProfile, 'name', order]]
+            } else if (orderfield == 'balance') {
+                orderdesc = [[UserBalanceSnapshot, 'balance', order]]
+            }
+            ret.data = await User.findAll({
+                attributes: ['id'],
+                where: where,
+                include: [
+                    { model: UserProfile, attributes: ['user_id', 'name', 'phone'] },
+                    { model: UserBalanceSnapshot, where: { status: 1, mid: req.mid, type: type, snap_date: maxDate }, attributes: ['balance', 'type', 'member_id', 'update_time', 'snap_date'], required: false },
+                    //{ model: Member, attributes: ['id', 'name'], where: { status: 1, mid: req.mid }, required: false },                
+                ],
+                order: orderdesc,
+                limit: pagesize, offset: page * pagesize,
+            })
+            let ids = []
+            ret.data.map((row) => {
+                ids.push(row.id)
+            })
+            ret.members = await Member.findAll({ attributes: ['id', 'user_id', 'name', 'status'], where: { user_id: ids, status: { [op.ne]: 3 } } })
+            ret.balance = await UserBalanceSnapshot.sum('balance', {
+                where: { mid: req.mid, snap_date: maxDate, status: 1, type: type },
+                //attributes: [[db.Sequelize.fn('sum', db.Sequelize.col('balance')), 'balance']]
+            })
+            ret.snap_date = maxDate
+            return returnResult(res, ret)
         })
-        let ids = []
-        ret.data.map((row) => {
-            ids.push(row.id)
-        })
-        ret.members = await Member.findAll({ attributes: ['id', 'user_id', 'name', 'status'], where: { user_id: ids, status: { [op.ne]: 3 } } })
-        ret.balance = await UserBalanceSnapshot.sum('balance', {
-            where: { mid: req.mid, snap_date: maxDate, status: 1, type: type },
-            //attributes: [[db.Sequelize.fn('sum', db.Sequelize.col('balance')), 'balance']]
-        })
-        ret.snap_date = maxDate
-        return returnResult(res, ret)
-    })
+    }
 }
-module.exports.snapshotBalance = async (req, res) => {
-    doWithTry(res, async () => {
-        let date = new Date().toISOString().substring(0, 10)
-        await db.sequelize.query("delete from user_balance_snapshot where snap_date = '" + date + "'")
-        await db.sequelize.query("insert user_balance_snapshot(bid,mid,user_id,member_id,type,balance,status,create_time,update_time,snap_date) select id as bid,mid,user_id,member_id,type,balance,status,create_time,update_time,'" + date + "' as snap_date from user_balance")
-        return returnResult(res, "ok")
-    })
+module.exports.snapshotBalance = {
+    get: async (req, res) => {
+        doWithTry(res, async () => {
+            let date = new Date().toISOString().substring(0, 10)
+            await db.sequelize.query("delete from user_balance_snapshot where snap_date = '" + date + "'")
+            await db.sequelize.query("insert user_balance_snapshot(bid,mid,user_id,member_id,type,balance,status,create_time,update_time,snap_date) select id as bid,mid,user_id,member_id,type,balance,status,create_time,update_time,'" + date + "' as snap_date from user_balance")
+            return returnResult(res, "ok")
+        })
+    }
 }
 module.exports.snapshotBalanceForService = async () => {
     try {

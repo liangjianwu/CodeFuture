@@ -1,4 +1,4 @@
-const { body, query, oneOf } = require('express-validator/check')
+const { body, query, oneOf } = require('express-validator')
 const { Debug } = require('../../components')
 
 exports.validate = (method) => {

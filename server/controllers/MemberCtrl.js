@@ -16,20 +16,24 @@ const MemberGroup = model.MemberGroup
 const User = model.User
 const Group = model.Group
 
-module.exports.loginLoad = async (req, res) => {
-    let content = { serviceMenu: [] }
-    let menus = await loadMenu(req.uid, AppsList.crm.appid)
-    if (menus) {
-        content.serviceMenu = menus
-        return returnResult(res, content)
-    } else {
-        return returnError(res, 910001)
+module.exports.loginLoad = {
+    get: async (req, res) => {
+        let content = { serviceMenu: [] }
+        let menus = await loadMenu(req.uid, AppsList.crm.appid)
+        if (menus) {
+            content.serviceMenu = menus
+            return returnResult(res, content)
+        } else {
+            return returnError(res, 910001)
+        }
     }
 }
-module.exports.getMemberInfoStruct = async (req, res) => {
+module.exports.getMemberInfoStruct = {
+    get:async (req, res) => {
     return findOne(res, MemberInfoStruct, { mid: req.mid }, async (mis) => {
         return returnResult(res, mis && mis.struct ? JSON.parse(mis.struct) : [])
     })
+}
 }
 module.exports.setMemberInfoStruct = async (req, res) => {
     let { form } = req.body
@@ -45,7 +49,8 @@ module.exports.setMemberInfoStruct = async (req, res) => {
     })
 }
 
-module.exports.loadUser = async (req, res) => {
+module.exports.loadUser = {
+    get:async (req, res) => {
     let { page, pagesize, countdata, status, orderfield, order } = req.query
     pagesize = Number(pagesize)
     page = Number(page)
@@ -99,8 +104,10 @@ module.exports.loadUser = async (req, res) => {
         return returnError(res, 900001)
     }
 }
+}
 
-module.exports.loadCustomer = async (req, res) => {
+module.exports.loadCustomer = {
+    get:async (req, res) => {
     let { page, pagesize, countdata, status, orderfield, order } = req.query
     pagesize = Number(pagesize)
     page = Number(page)
@@ -122,15 +129,15 @@ module.exports.loadCustomer = async (req, res) => {
         ret.data = await Member.findAll({
             where: where,
             include: [{ model: MemberInfo, attributes: ['key', 'value'] },
-            { model: MemberGroup, attributes: ['group_id'],where:{status:1},required:false },
+            { model: MemberGroup, attributes: ['group_id'], where: { status: 1 }, required: false },
             { model: UserProfile, attributes: ['name', 'email', 'phone'] }],
             order: [[orderfield, order]],
             limit: pagesize,
             offset: page * pagesize,
         })
         ret.group = await Group.findAll({
-            where:{mid:req.mid,status:1},
-            attributes:["id","name"]
+            where: { mid: req.mid, status: 1 },
+            attributes: ["id", "name"]
         })
         return returnResult(res, ret)
     } catch (e) {
@@ -138,7 +145,7 @@ module.exports.loadCustomer = async (req, res) => {
         return returnError(res, 900001)
     }
 }
-
+}
 module.exports.editCustomerInfo = async (req, res) => {
     return doWithTry(res, async () => {
         let keys = Object.keys(req.body)
@@ -191,7 +198,8 @@ module.exports.editCustomerInfo = async (req, res) => {
         return returnResult(res, id)
     })
 }
-module.exports.getCustomer = async (req, res) => {
+module.exports.getCustomer = {
+    get:async (req, res) => {
     return doWithTry(res, async () => {
         let member = req.query.id > 0 ? await Member.findOne({ where: { id: req.query.id } }) : { id: 0 }
         if (member) {
@@ -217,7 +225,7 @@ module.exports.getCustomer = async (req, res) => {
         }
     })
 }
-
+}
 module.exports.editUserInfo = async (req, res) => {
     return doWithTry(res, async () => {
         let k = ['firstname', 'lastname', 'phone', 'email']
@@ -275,13 +283,16 @@ module.exports.createGroup = async (req, res) => {
         return returnResult(res, ret)
     })
 }
-module.exports.getGroups = async (req, res) => {
+module.exports.getGroups = {
+    get:async (req, res) => {
     return doWithTry(res, async () => {
         return returnResult(res, await loadGroups(req))
     })
 }
+}
 
-module.exports.getGroupCustomers = async (req, res) => {
+module.exports.getGroupCustomers = {
+    get:async (req, res) => {
     let { id, page, pagesize, countdata, status } = req.query
     return doWithTry(res, async () => {
         Member.belongsTo(MemberGroup, { foreignKey: "id", targetKey: 'member_id' })
@@ -308,8 +319,8 @@ module.exports.getGroupCustomers = async (req, res) => {
                 model: MemberGroup,
                 attributes: ['member_id'],
                 where: { group_id: id, mid: req.mid, status: 1 },
-            }, 
-            { model: MemberGroup, attributes: ['group_id'],where:{status:1} },
+            },
+            { model: MemberGroup, attributes: ['group_id'], where: { status: 1 } },
             {
                 model: UserProfile,
                 attributes: ['name', 'phone', 'email']
@@ -318,7 +329,7 @@ module.exports.getGroupCustomers = async (req, res) => {
         return returnResult(res, retdata)
     })
 }
-
+}
 module.exports.addToGroup = async (req, res) => {
     let { ids, groups } = req.body
     return doWithTry(res, async () => {
@@ -335,7 +346,8 @@ module.exports.addToGroup = async (req, res) => {
         return returnSuccess(res, 100000)
     })
 }
-module.exports.searchcustomer = async (req, res) => {
+module.exports.searchcustomer = {
+    get:async (req, res) => {
     const { value, page, pagesize, countdata, status } = req.query
     const Op = db.Sequelize.Op
     return doWithTry(res, async () => {
@@ -365,7 +377,7 @@ module.exports.searchcustomer = async (req, res) => {
             where: where,
             include: [{
                 model: UserProfile, attributes: ['name', 'phone', 'email'],
-            },{ model: MemberGroup, attributes: ['group_id'],where:{status:1} ,required:false}],
+            }, { model: MemberGroup, attributes: ['group_id'], where: { status: 1 }, required: false }],
             order: [["id", "desc"]],
             limit: pagesize * 1,
             offset: page * pagesize,
@@ -373,7 +385,9 @@ module.exports.searchcustomer = async (req, res) => {
         return returnResult(res, retdata)
     })
 }
-module.exports.searchuser = async (req, res) => {
+}
+module.exports.searchuser = {
+    get:async (req, res) => {
     const { value, page, pagesize, countdata, status } = req.query
     const Op = db.Sequelize.Op
     return doWithTry(res, async () => {
@@ -449,6 +463,7 @@ module.exports.searchuser = async (req, res) => {
         })
         return returnResult(res, retdata)
     })
+}
 }
 module.exports.removeFromGroup = async (req, res) => {
     doWithTry(res, async () => {

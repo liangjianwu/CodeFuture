@@ -16,17 +16,18 @@ const UserProfile = model.UserProfile
 const Email_Task_Status = ['Editing', 'Waiting', 'Finished', 'Exception']
 
 module.exports.EmailTaskStatus = Email_Task_Status
-module.exports.loginLoad = async (req, res) => {
-    let content = { serviceMenu: [] }
-    let menus = await loadMenu(req.uid, AppsList.emailservice.appid)
-    if (menus) {
-        content.serviceMenu = menus
-        return returnResult(res, content)
-    } else {
-        return returnError(res, 910001)
+module.exports.loginLoad = {
+    get: async (req, res) => {
+        let content = { serviceMenu: [] }
+        let menus = await loadMenu(req.uid, AppsList.emailservice.appid)
+        if (menus) {
+            content.serviceMenu = menus
+            return returnResult(res, content)
+        } else {
+            return returnError(res, 910001)
+        }
     }
 }
-
 
 module.exports.editTemplate = async (req, res) => {
 
@@ -63,41 +64,44 @@ module.exports.editTemplate = async (req, res) => {
     })
 
 }
-module.exports.loadTemplates = async (req, res) => {
-    doWithTry(res, async () => {
+module.exports.loadTemplates = {
+    get: async (req, res) => {
+        doWithTry(res, async () => {
 
-        const { page, pagesize, countdata } = req.query
+            const { page, pagesize, countdata } = req.query
 
-        let where = { status: 1, mid: req.mid }
+            let where = { status: 1, mid: req.mid }
 
-        let retdata = { total: 0, data: [] }
-        countdata == 1 && (retdata.total = await EmailTemplate.count({ where: where }))
+            let retdata = { total: 0, data: [] }
+            countdata == 1 && (retdata.total = await EmailTemplate.count({ where: where }))
 
-        retdata.data = await EmailTemplate.findAll({
-            where: where,
-            attributes: ['id', 'name', 'reply', 'sender_name', 'description', 'datasource', 'title', 'create_time'],
-            limit: pagesize * 1,
-            offset: page * pagesize,
-            order: [["id", "desc"]],
+            retdata.data = await EmailTemplate.findAll({
+                where: where,
+                attributes: ['id', 'name', 'reply', 'sender_name', 'description', 'datasource', 'title', 'create_time'],
+                limit: pagesize * 1,
+                offset: page * pagesize,
+                order: [["id", "desc"]],
+            })
+            return returnResult(res, retdata)
+
         })
-        return returnResult(res, retdata)
-
-    })
+    }
 }
+module.exports.getTemplate = {
+    get: async (req, res) => {
+        doWithTry(res, async () => {
 
-module.exports.getTemplate = async (req, res) => {
-    doWithTry(res, async () => {
 
+            let where = { id: req.query.id, status: 1, mid: req.mid }
 
-        let where = { id: req.query.id, status: 1, mid: req.mid }
-
-        let et = await EmailTemplate.findOne({ where: where })
-        if (!et) {
-            return returnError(res, 500001)
-        } else {
-            return returnResult(res, et)
-        }
-    })
+            let et = await EmailTemplate.findOne({ where: where })
+            if (!et) {
+                return returnError(res, 500001)
+            } else {
+                return returnResult(res, et)
+            }
+        })
+    }
 }
 module.exports.removeTemplate = async (req, res) => {
     doWithTry(res, async () => {
@@ -138,50 +142,54 @@ module.exports.cloneTemplate = async (req, res) => {
         }
     })
 }
-module.exports.loadTasks = async (req, res) => {
-    const taskStatus = (status) => {
-        return Email_Task_Status[status]
-    }
-    doWithTry(res, async () => {
-        const { page, pagesize, countdata } = req.query
-        let where = { mid: req.mid, type: 'email' }
-        let retdata = { total: 0, data: [] }
-        countdata == 1 && (retdata.total = await Task.count({ where: where }))
-        Task.belongsTo(EmailTemplate, { foreignKey: 'template_id' })
-        let data = await Task.findAll({
-            where: where,
-            attributes: ['id', 'datasource', 'status', 'schedule_time', 'create_time'],
-            include: [{ model: EmailTemplate, attributes: ["id", "name", "reply", "sender_name", "datasource", "title"] }],
-            limit: pagesize * 1,
-            offset: page * pagesize,
-            order: [["id", "desc"]],
-        })
-        data.map(d => {
-            retdata.data.push({
-                id: d.id, datasource_value: d.datasource, status: d.status, status_desc: taskStatus(d.status), schedule_time: d.schedule_time, customers: d.customers, create_time: d.create_time,
-                reply: d.email_template.reply, sender_name: d.email_template.sender_name, datasource: d.email_template.datasource, template_id: d.email_template.id, template_name: d.email_template.name, title: d.email_template.title,
+module.exports.loadTasks = {
+    get: async (req, res) => {
+        const taskStatus = (status) => {
+            return Email_Task_Status[status]
+        }
+        doWithTry(res, async () => {
+            const { page, pagesize, countdata } = req.query
+            let where = { mid: req.mid, type: 'email' }
+            let retdata = { total: 0, data: [] }
+            countdata == 1 && (retdata.total = await Task.count({ where: where }))
+            Task.belongsTo(EmailTemplate, { foreignKey: 'template_id' })
+            let data = await Task.findAll({
+                where: where,
+                attributes: ['id', 'datasource', 'status', 'schedule_time', 'create_time'],
+                include: [{ model: EmailTemplate, attributes: ["id", "name", "reply", "sender_name", "datasource", "title"] }],
+                limit: pagesize * 1,
+                offset: page * pagesize,
+                order: [["id", "desc"]],
             })
+            data.map(d => {
+                retdata.data.push({
+                    id: d.id, datasource_value: d.datasource, status: d.status, status_desc: taskStatus(d.status), schedule_time: d.schedule_time, customers: d.customers, create_time: d.create_time,
+                    reply: d.email_template.reply, sender_name: d.email_template.sender_name, datasource: d.email_template.datasource, template_id: d.email_template.id, template_name: d.email_template.name, title: d.email_template.title,
+                })
+            })
+            return returnResult(res, retdata)
+
         })
-        return returnResult(res, retdata)
-
-    })
+    }
 }
-module.exports.getTask = async (req, res) => {
-    doWithTry(res, async () => {
+module.exports.getTask = {
+    get: async (req, res) => {
+        doWithTry(res, async () => {
 
-        let where = { mid: req.mid, type: 'email', id: req.query.id }
+            let where = { mid: req.mid, type: 'email', id: req.query.id }
 
-        let data = await Task.findOne({ where: where })
-        if (!data) {
-            return returnError(res, 500002)
-        }
-        let customers = []
-        if (data.customers) {
-            customers = await UserProfile.findAll({ where: { id: JSON.parse(data.customers) }, attributes: ['id', 'name', 'email'] })
-        }
-        return returnResult(res, { task: data, customers: customers })
+            let data = await Task.findOne({ where: where })
+            if (!data) {
+                return returnError(res, 500002)
+            }
+            let customers = []
+            if (data.customers) {
+                customers = await UserProfile.findAll({ where: { id: JSON.parse(data.customers) }, attributes: ['id', 'name', 'email'] })
+            }
+            return returnResult(res, { task: data, customers: customers })
 
-    })
+        })
+    }
 }
 module.exports.setTaskStatus = async (req, res) => {
     doWithTry(res, async () => {
@@ -205,7 +213,7 @@ module.exports.setTaskStatus = async (req, res) => {
 module.exports.editTask = async (req, res) => {
     let { id, type, template_id, datasource, schedule_time, customers } = req.body
     doWithTry(res, async () => {
-        let where = { id: template_id, status: 1, }                  
+        let where = { id: template_id, status: 1, }
         let et = await EmailTemplate.findOne({ where: where })
         if (!et) {
             return returnError(res, 500001)
@@ -238,19 +246,21 @@ module.exports.editTask = async (req, res) => {
     })
 }
 
-module.exports.loadTaskResult = async (req, res) => {
-    let { id } = req.query
-    doWithTry(res, async () => {
-        let where = { mid: req.mid, type: 'email', id: req.query.id }
+module.exports.loadTaskResult = {
+    get: async (req, res) => {
+        let { id } = req.query
+        doWithTry(res, async () => {
+            let where = { mid: req.mid, type: 'email', id: req.query.id }
 
-        let data = await Task.findOne({ where: where })
-        if (!data) {
-            return returnError(res, 500002)
-        }
-        let emailqueue = await EmailQueue.findAll({ where: { task_id: id } })
-        TaskLog.belongsTo(Customer, { foreignKey: 'customer_id' })
-        let tasklog = await TaskLog.findAll({ where: { task_id: id }, include: [{ model: Customer, attributes: ['name', 'email'] }] })
-        return returnResult(res, { emailqueue, tasklog })
+            let data = await Task.findOne({ where: where })
+            if (!data) {
+                return returnError(res, 500002)
+            }
+            let emailqueue = await EmailQueue.findAll({ where: { task_id: id } })
+            TaskLog.belongsTo(Customer, { foreignKey: 'customer_id' })
+            let tasklog = await TaskLog.findAll({ where: { task_id: id }, include: [{ model: Customer, attributes: ['name', 'email'] }] })
+            return returnResult(res, { emailqueue, tasklog })
 
-    })
+        })
+    }
 }
