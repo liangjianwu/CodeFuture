@@ -18,7 +18,7 @@ const sequelize = new Sequelize(dbConfig.DB,dbConfig.USER,dbConfig.PASSWORD,{
         idle: dbConfig.pool.idle,
         acquire:dbConfig.pool.acquire,
     },
-    logging:false,
+    logging:true,
 });
 
 const ID_TYPE = Sequelize.INTEGER;

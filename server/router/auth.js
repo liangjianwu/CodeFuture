@@ -1,17 +1,24 @@
 const model = require("../db/model")
+const db = require('../db/db')
 const md5 = require('md5')
 const { Hint, Debug, ErrorHint } = require('../components');
 const { errorMsg, returnError } = require("../components/errcode");
 const appConfig = require("../configs/app.config");
+const { recordSysLog, doWithTry } = require("../controllers/utils/Common");
 
 const UserAuth = model.MUserAuth;
 const Coach = model.Coach;
+const Menu = model.MenuTable;
+const UserRole = model.MUserRole;
+const RoleAuth = model.RoleAuth;
+
 const passPath = {
     user: {
         register: ['POST'],
         login: ['POST'],
         coachlogin: ['POST'],
         verifycode: ['GET', 'POST'],
+        sendcode:['POST'],
         resetpwd: ['POST'],
         sendcode1:['POST'],
     },
@@ -28,7 +35,47 @@ const coachPath = {
         loadschedule:['GET'],
     }
 }
+const defaultPath = [
+    '/service/loginload',
+    '/user/sendcode',
+    '/service/merchant',
+    '/user/profile',
+    '/service/joincompany',
+    '/service/addcompany',
+]
+const checkAuth = async (req,res,callback) =>{
+    doWithTry(res,async()=>{
+        let path = req.path        
+        if(defaultPath.indexOf(path)>=0) {
+            return callback(req,res)
+        }
+        let method = req.method
+        let idx = ['POST','GET','DELETE','PUT'].indexOf(method)
 
+        let menus = await Menu.findAll({where:{mid:[0,req.mid],url:path,status:1}})
+        if(menus.length == 0) {
+            return returnError(res,900009) 
+        }else {
+            for(let menu of menus) {
+                if(idx >=0 && menu.method.substring(idx,idx+1) == 1) {
+                    let roles = await RoleAuth.findAll({where:{mid:req.mid,menu_id:menu.id,status:1}})
+                    let roleids = []
+                    for(let r of roles) {
+                        roleids.indexOf(r.role_id) == -1 && roleids.push(r.role_id)
+                    }
+                    let ur = await UserRole.findAll({where:{mid:req.mid,user_id:req.uid,role_id:roleids,status:1}})
+                    if(ur.length>0) {
+                        Debug("Check auth pass")
+                        return callback(req,res)
+                    }
+                    break
+                }
+            }
+        }
+        Debug("Check auth failed")
+        return returnError(res,900008) 
+    })
+}
 const auth = async (req, res, callback) => {
     UserAuth.findOne({where:{user_id:req.uid}}).then(ua=>{
         if(ua) {
@@ -41,7 +88,7 @@ const auth = async (req, res, callback) => {
                 return returnError(res,900002)
             }
             ua.update({expired_time:Date.now()+appConfig.auth_token_expired_time})
-            return callback(req,res)            
+            return checkAuth(req,res,callback)
         }else {
             return returnError(res,900004)
         }
@@ -103,10 +150,9 @@ const authRouter = async (req, res, next) => {
             next()
         } else {       
             Debug("Auth")     
-            auth(req, res, (req, res) => {
-                Debug(Date.now())
+            recordSysLog(res,req,req.method,req.path,['GET','DELETE'].indexOf(req.method)>=0 ?JSON.stringify(req.query):JSON.stringify(req.body),1)
+            auth(req, res, (req, res) => {                
                 next()
-                Debug(Date.now())
             })
         }
     }

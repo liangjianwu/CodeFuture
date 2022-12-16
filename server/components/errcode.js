@@ -14,7 +14,13 @@ const ErrorMsg = {
     err900005:'Exception, failed to find ua data',
     err900003:'Session is timeout',
     err900004:'Need to login',
-    err900005:'Failed to create the company',    
+    err900005:'Failed to create the company', 
+    err900006:'Failed to create the data object',     
+    err900007:'Duplicate data exists',     
+    err900008:'Requestion was refused',
+    err900009:'Requestion is not in checklist',
+    err900010:'There is no default role in system',
+    
     //servicectrl
     err910001:'Exception, failed to load menu',
     err910002:'Exception, failed to load services',
@@ -48,9 +54,9 @@ const ErrorMsg = {
     //resetpwd
     err190031:'Exception, failed to update user data',
     err190032:'Exception, failed to find user data',
-    err190033:'Exception, failed to find uv data',
-    err190034:'Exception, failed to update uv data',
-    err190034:'Exception, failed to update user data',    
+    err190033:'Exception, failed to find uv data',    
+    err190034:'Exception, failed to update data',    
+    err190035:'Your password has not been changed!',
     err100032:'The code has expired',
     err100033:'The code is invalid', 
     //login

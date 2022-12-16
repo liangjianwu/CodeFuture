@@ -23,6 +23,7 @@ import apis from '../api';
 import { loadUserContent } from '../App/DataLoad'
 import { SideMainMenu } from './fragement/SideMenu';
 import { AppBar, Drawer } from '../Component/MuiEx';
+import { NewSideMainMenu } from './fragement/NewSideMenu';
 const drawerWidth = 240;
 
 const mdTheme = createTheme();
@@ -50,7 +51,7 @@ function DashboardContent() {
         } else {
             loadUserContent(apis, (data) => {
                 setLoading(false)
-                setSideMenuData(data.serviceMenu)
+                sideMenuDataPrepare(data.serviceMenu)
                 setMerchant(data.merchant)
             }, (error) => {
                 setLoading(false)
@@ -58,6 +59,27 @@ function DashboardContent() {
             })
         }        
     }, [])
+    const sideMenuDataPrepare = (menus)=>{
+        let funcs = []
+        for(let menu of menus) {
+            if(menu.parent_id == 0) {
+                funcs.push({
+                    isMenu:true,name:menu.name,items:[],auth:true,type:'entrance',url:menu.url,hasSubmenu:true,id:menu.id,parent_id:menu.parent_id
+                })
+            }else {                
+                for(let M of funcs) {                    
+                    if(M.id == menu.parent_id) {
+                        M.items.push({
+                            isMenu:true,name:menu.name,auth:true,type:'page',url:menu.url,
+                        })
+                        break
+                    }
+                }
+            }
+        }
+        console.log(funcs)
+        setSideMenuData(funcs)
+    }
     useEffect(()=>{
         document.title = merchant ? merchant.name:"Servify"
     },[merchant])
@@ -144,7 +166,7 @@ function DashboardContent() {
                         </IconButton> */}
                     </Toolbar>
                 </AppBar>
-                <Drawer variant="permanent" open={open}>
+                <Drawer variant="permanent" open={open} >
                     <Toolbar
                         sx={{
                             display: 'flex',
@@ -172,7 +194,7 @@ function DashboardContent() {
                     <Divider />
 
                     <List component="nav">
-                        <SideMainMenu menuData={sideMenuData}/>                        
+                        <NewSideMainMenu menuData={sideMenuData}/>                        
                     </List>
                 </Drawer>
                 <Box
@@ -197,7 +219,6 @@ function DashboardContent() {
                     </Box>
                 </Box>
             </Box >
-
         </ThemeProvider >
     );
 }

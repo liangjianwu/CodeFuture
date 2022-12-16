@@ -135,7 +135,7 @@ const MultiSelector = (props) => {
     }
     return (<div sx={{...props.sx}}>
         {props.label && <Typography>{props.label}</Typography>}
-        {props.items && props.items.map((item,index)=>{            
+        {props.items && props.items.map((item,index)=>{                 
             const isSelected = selected && selected.indexOf(props.values ? props.values[index]:index) !== -1
             return <FormControlLabel key={index} onChange={() => handleChange(index)} label={item} control={<Checkbox checked={isSelected} onChange={() => handleChange(index)} />} />    
         })}

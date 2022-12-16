@@ -1,6 +1,7 @@
 const db = require('../db/db');
 
 module.exports = db.defineModel('product', {    
+    area_id:db.Sequelize.INTEGER,
     name:db.Sequelize.STRING(64) ,    
     description:db.Sequelize.TEXT,    
     list_price:db.Sequelize.DECIMAL(2),

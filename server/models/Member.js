@@ -1,6 +1,7 @@
 const db = require('../db/db');
 
 module.exports = db.defineModel('member', { 
+    area_id:db.Sequelize.INTEGER,
     user_id:db.Sequelize.INTEGER,   
     lastname: db.Sequelize.STRING(45),
     firstname: db.Sequelize.STRING(45),

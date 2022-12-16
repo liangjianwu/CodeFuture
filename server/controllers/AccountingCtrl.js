@@ -11,6 +11,7 @@ const UserOrder = model.UserOrder
 const Member = model.Member
 const User = model.User
 const UserBalance = model.UserBalance
+const BalanceType = model.BalanceType
 const UserBalanceSnapshot = model.UserBalanceSnapshot
 const UserProfile = model.UserProfile
 const UserBalanceRecord = model.UserBalanceRecord
@@ -102,8 +103,8 @@ module.exports.loadMembers = {
 // }
 module.exports.loadFamilys = {
     get: async (req, res) => {
-        let { page, pagesize, countdata, orderfield, order, type } = req.query
-        type = type ? type : 'privateclass'
+        let { page, pagesize, countdata, orderfield, order} = req.query
+        
         pagesize = Number(pagesize)
         page = Number(page)
         doWithTry(res, async () => {
@@ -112,7 +113,7 @@ module.exports.loadFamilys = {
             if (countdata) {
                 ret.total = await User.count({ where: where })
             }
-            User.hasOne(UserBalance, { foreignKey: 'user_id' })
+            User.hasMany(UserBalance, { foreignKey: 'user_id' })
             //User.hasMany(Member, { foreignKey: 'user_id' })
             User.hasOne(UserProfile, { foreignKey: 'user_id' })
             let orderdesc = [['id', order]]
@@ -126,7 +127,7 @@ module.exports.loadFamilys = {
                 where: where,
                 include: [
                     { model: UserProfile, attributes: ['user_id', 'name', 'phone'] },
-                    { model: UserBalance, where: { status: 1, mid: req.mid, type: type }, attributes: ['balance', 'type', 'member_id', 'update_time'], required: false },
+                    // { model: UserBalance, where: { status: 1 }, attributes: ['balance', 'type', 'member_id', 'update_time'], required: false },
                     //{ model: Member, attributes: ['id', 'name'], where: { status: 1, mid: req.mid }, required: false },                
                 ],
                 order: orderdesc,
@@ -137,15 +138,68 @@ module.exports.loadFamilys = {
                 ids.push(row.id)
             })
             ret.members = await Member.findAll({ attributes: ['id', 'user_id', 'name', 'status', 'level'], where: { user_id: ids, status: { [op.ne]: 3 } } })
-            ret.balance = await UserBalance.sum('balance', {
-                where: { mid: req.mid, status: 1, type: type },
-                //attributes: [[db.Sequelize.fn('sum', db.Sequelize.col('balance')), 'balance']]
+            UserBalance.belongsTo(BalanceType,{foreignKey:"balance_typeid",targetKey:'id'})
+            ret.balances = await UserBalance.findAll({ attributes: ['id','user_id','balance','balance_typeid','status'], 
+                    where: { user_id: ids, status: { [op.ne]: 3 } } ,
+                    include:[{model:BalanceType,attributes:['type','id'],required:false},],
             })
+            // ret.balance = await UserBalance.sum('balance', {
+            //     where: { mid: req.mid, status: 1 },
+            //     //attributes: [[db.Sequelize.fn('sum', db.Sequelize.col('balance')), 'balance']]
+            // })
             return returnResult(res, ret)
         })
     }
 }
+module.exports.userbalance = {
+    post: async (req, res) => {
+        let { customerid, familyid, amount, balance_typeid, note, date, invoice } = req.body
+        return doWithTry(res, async () => {
+            if (familyid == 0) {
+                let where = { mid: req.mid, id: customerid, status: { [op.ne]: 3 } }
+                let mc = await Member.findOne({ where: where })
+                if (!mc) {
+                    return returnError(res, 400006)
+                }
+                familyid = mc.user_id
+            }
+            let bt = await BalanceType.findOne({where:{mid:req.mid,id:balance_typeid}})
+            if(!bt) {
+                return returnError(res,400001)
+            }
+            let w = { mid: req.mid, user_id: familyid, balance_typeid: balance_typeid, member_id: 0 }
+            let mcb = await UserBalance.findOne({ where: w })
+            let originalBalance = 0
+            if (!mcb) {
+                w.balance = amount
+                w.member_id = 0
+                mcb = await UserBalance.create(w)
+            } else {
+                originalBalance = mcb.balance
+                mcb.balance = Number(mcb.balance) + Number(amount)
+                await mcb.save()
+            }
+            let order = await UserOrder.create({
+                mid: req.mid,
+                user_id: familyid,
+                balance_typeid:balance_typeid,
+                member_id: 0,
+                member_name: '',
+                product_id: 0,
+                product_name: 'recharge',
+                product_price: amount,
+                coach_id: 0,
+                count: 0,
+                amount: amount,
+                charge: 0,
+                order_date: new Date(date),
+            })
+            await UserBalanceRecord.create({ user_id: familyid, member_id: 0, mid: req.mid,balance_typeid:balance_typeid, balance_id: mcb.id, amount: amount, order: order.id, pre_balance: originalBalance, action: 'recharge', invoice: invoice ? invoice : '', note: note ? note : bt.type, ip: req.requestIp })
 
+            return returnResult(res, { balance_typeid: balance_typeid, balance: mcb.balance })
+        })
+    }
+}
 module.exports.recharge = async (req, res) => {
     let { customerid, familyid, amount, type, note, date, invoice } = req.body
     return doWithTry(res, async () => {

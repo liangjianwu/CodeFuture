@@ -60,8 +60,22 @@ exports.validate = (method) => {
                 body('passwd').exists().notEmpty().isMD5(),
             ]
         }
-        case 'profile':{
+        case 'profile.post':{
             return [
+                body('firstname').optional().isString().isLength({min:2,max:32}),
+                body('lastname').optional().isString().isLength({min:2,max:32}),                
+                body('gender').optional().isInt({min:0,max:2}),
+                body('country').optional().isString().isLength({min:3,max:32}),                
+                body('phone').optional().isString().isMobilePhone(),
+                body('province').optional().isString().isLength({min:2,max:32}),                
+                body('city').optional().isString().isLength({min:2,max:32}),                
+                body('address').optional().isString().isLength({min:5,max:64}), 
+                body('postcode').optional().isString().isLength({min:5,max:8}), 
+            ]
+        }
+        case 'profile.put':{
+            return [
+                
                 body('firstname').optional().isString().isLength({min:2,max:32}),
                 body('lastname').optional().isString().isLength({min:2,max:32}),                
                 body('gender').optional().isInt({min:0,max:2}),

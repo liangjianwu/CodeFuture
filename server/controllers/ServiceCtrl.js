@@ -16,28 +16,70 @@ const UserAuth = model.MUserAuth
 const UserProfile = model.MUserProfile
 const MerchantAuth = model.MerchantAuth
 const UserVerify = model.UserVerify
+const UserRole = model.MUserRole
+const RoleAuth = model.RoleAuth
+const Role = model.Role
+const Menu = model.MenuTable
 
+// module.exports.loginLoad = {
+//     get: async (req, res) => {
+//         let content = { serviceMenu: [] }
+//         let menus = req.mid > 0 ? SaasMenu() : SaasFirstMenu()
+//         if (menus) {
+//             content.serviceMenu = menus
+//             if (req.mid > 0) {
+//                 return findOne(res, MerchantProfile, { id: req.mid }, (ma) => {
+//                     content.merchant = { name: ma.name, id: ma.id }
+//                     return returnResult(res, content)
+//                 })
+//             } else {
+//                 return returnResult(res, content)
+//             }
+//             //return returnResult(res, content)
+//         } else {
+//             return returnError(res, 910001)
+//         }
+//     }
+// }
+
+const mySaasMenu = async (req)=>{
+    let mr = await  UserRole.findAll({where:{mid:req.mid,user_id:req.uid,status:1}})
+    if(mr.length == 0) return []
+    let roles = []
+    for(let ur of mr) {
+        roles.indexOf(ur.role_id) == -1 && roles.push(ur.role_id)
+    }
+    let ra = await RoleAuth.findAll({where:{mid:req.mid,role_id:roles,status:1}})
+    if(ra.length == 0) return []
+    let menu_ids = []
+    for(let m of ra) {
+        menu_ids.indexOf(m.menu_id) == -1 && menu_ids.push(m.menu_id)
+    }
+    let menus  = await Menu.findAll({where:{mid:[0,req.mid],id:menu_ids,status:1,type:0},order:[["parent_id",'ASC'],['position','desc']]})
+    return menus;
+}
 module.exports.loginLoad = {
     get: async (req, res) => {
-        let content = { serviceMenu: [] }
-        let menus = req.mid > 0 ? SaasMenu() : SaasFirstMenu()
-        if (menus) {
-            content.serviceMenu = menus
-            if (req.mid > 0) {
-                return findOne(res, MerchantProfile, { id: req.mid }, (ma) => {
-                    content.merchant = { name: ma.name, id: ma.id }
+        doWithTry(res,async()=>{
+            let content = { serviceMenu: [] }
+            let menus = req.mid > 0 ? await mySaasMenu(req) : SaasFirstMenu()
+            if (menus) {
+                content.serviceMenu = menus
+                if (req.mid > 0) {
+                    return findOne(res, MerchantProfile, { id: req.mid }, (ma) => {
+                        content.merchant = { name: ma.name, id: ma.id }
+                        return returnResult(res, content)
+                    })
+                } else {
                     return returnResult(res, content)
-                })
+                }
+                //return returnResult(res, content)
             } else {
-                return returnResult(res, content)
+                return returnError(res, 910001)
             }
-            //return returnResult(res, content)
-        } else {
-            return returnError(res, 910001)
-        }
+        })
     }
 }
-
 module.exports.merchant = {
     get: async (req, res) => {
         let content = {}
@@ -85,6 +127,14 @@ module.exports.addcompany = async (req, res) => {
                 await mu.save()
                 let mpa = await MerchantAuth.create({ mid: mp.id, domain: req.get('host'), token: md5(mp.id + mp.name + Date.now()) })
                 await UserAuth.update({ mid: mp.id }, { where: { user_id: mu.id } })
+                let role = await Role.create({mid:mp.id,name:'Admin',note:'Create By System',status:1})
+                if(role) {
+                    let ur = await UserRole.create({mid:mp.id,user_id:req.uid,role_id:role.id,status:1})
+                    let menus = await Menu.findAll({where:{mid:0,status:1}})
+                    for(let m of menus) {
+                        await RoleAuth.create({mid:mp.id,role_id:role.id,menu_id:m.id,status:1})
+                    }
+                }
                 clearCache()
                 return returnResult(res, { id: mp.id, token: mpa.token.substring(mpa.token.length - 6) })
             })

@@ -39,6 +39,11 @@ import Schedule from '../Page/coach/Schedule';
 import Dashboard from '../Page/dashboard/Home';
 import CoachSignIn from '../Page/account/CoachSignIn';
 import GroupCharge from '../Page/accounting/GroupCharge';
+import UserSetting from '../Page/setting/User';
+import RoleSetting from '../Page/setting/Role';
+import MenuSetting from '../Page/setting/Menu';
+import BalanceSetting from '../Page/setting/Balance';
+import AreaSetting from '../Page/setting/Area';
 const App = () => {
   const theme = createTheme();
   return (
@@ -108,6 +113,13 @@ const App = () => {
             <Route path="coaches" element={<CoachReport />} />
             <Route path="recharge" element={<AccountingReport />} />            
           </Route> 
+          <Route path="/setting" element={<Layout />}>
+            <Route path="user/:roleid" element={<UserSetting />} />
+            <Route path="role/:userid" element={<RoleSetting />} />
+            <Route path="menu/:roleid" element={<MenuSetting />} />
+            <Route path="balance" element={<BalanceSetting />} />
+            <Route path="area" element={<AreaSetting />} />
+          </Route>
           <Route path="/event/preview/:id" element={<EventPreview />} />          
           <Route path="/activity/:id" element={<EventPreview />} />   
           <Route path="/schedule/:coachid/:memberid" element={<Schedule />}/>

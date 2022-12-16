@@ -1,6 +1,7 @@
 import { Box, Checkbox, Button,FormControlLabel, TextField,Typography, Alert, } from "@mui/material"
 import { useEffect, useState } from "react"
 import apis from "../../../api"
+import { loadAreas } from "../../../Component/DataLoader"
 import { MultiSelector, SingleSelector } from "../../../Component/MuiEx"
 import { apiResult,  getUserSession } from "../../../Utils/Common"
 
@@ -8,8 +9,10 @@ const MemberEditForm = (props) => {
     const [error,setError] = useState()
     getUserSession(apis)
     const [data,setData] = useState()
+    const [areas,setAreas] = useState()
     const [struct,setStruct] = useState()    
     useEffect(() => {
+        loadAreas(apis,setAreas,setError)
         apis.getCustomer(props.id?props.id:0).then(ret => {
             apiResult(ret, (data) => {
                 if(data.info) {

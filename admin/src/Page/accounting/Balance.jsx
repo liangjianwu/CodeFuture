@@ -4,9 +4,8 @@ import { useEffect, useState } from "react";
 import { apiResult, getUserSession, } from "../../Utils/Common";
 import apis from "../../api";
 import { MemberLevel, MemberStatus, RightDrawer } from "../../Component/MuiEx";
-import Recharge from "./fragement/Recharge";
+import Recharge from "./fragement/NewRecharge";
 import { useNavigate } from "react-router";
-import { getBalanceProduct } from "./config";
 import FamilyOptButton from "./fragement/FamilyOptButton";
 import {FamilyBar} from "./fragement/FamilyBar";
 import MemberEditForm from "../member/fragement/MemberEditForm";
@@ -20,7 +19,7 @@ const Balance = () => {
     const [currentPage, setCurrentPage] = useState(0)
     const [totalCount, setTotalCount] = useState(0)
     const [currentQuery, setCurrentQuery] = useState()
-    const [balance,setBalance] = useState(0)
+    //const [balances,setBalances] = useState(0)    
     const [error, setError] = useState()
     //const [rightComponent, setRightComponent] = useState()   //right drawer children
     const [rightDrawer, setRightDrawer] = useState()   //open or close right drawer
@@ -48,8 +47,8 @@ const Balance = () => {
             setLoading(false)
             apiResult(ret, (data) => {
                 countData == 1 && setTotalCount(data.total)
-                setCustomerData(data.data, data.members)
-                setBalance(data.balance)
+                setCustomerData(data.data, data.members,data.balances)
+                //setBalances(data.balances)
                 setCurrentQuery({ action: 'loadMembers' })
                 setCurrentPage(page)
             }, setError)
@@ -91,7 +90,7 @@ const Balance = () => {
         setRightDrawer(<Recharge familyid={id} onClose={(ret) => { setRightDrawer(); ret && loadData(currentPage, rowsPerPage, orderField.name, orderField.order) }} />)
     }
 
-    const setCustomerData = (data, members) => {
+    const setCustomerData = (data, members,balances) => {
         const items = []
         const hh = [
             { name: 'id', showName: 'ID' },
@@ -120,19 +119,6 @@ const Balance = () => {
                     }
                 }
             },
-            {
-                name: 'balance', showName: 'Balance', func: (v) => {
-                    if (v < 100) {
-                        return <span style={{ color: 'red' }}>${v}</span>
-                    } else if (v < 200) {
-                        return <span style={{ color: 'orange' }}>${v}</span>
-                    } else if (v) {
-                        return <span style={{ color: 'green' }}>${v}</span>
-                    } else {
-                        return '-'
-                    }
-                }
-            },
         ]
         data.map(item => {
             let d = { id: item.id, parent: item.user_profile.name, user_id: item.user_profile.user_id, phone: item.user_profile.phone, members: [], balance: item.user_balance?.balance }
@@ -141,24 +127,26 @@ const Balance = () => {
                     d.members.push({ id: b.id, name: b.name, status: b.status,level:b.level })
                 }
             })
-            // item.user_balances.map(b => {
-            //     d[b.type] = b.balance
-            //     let h = []
-            //     hh.map(item => {
-            //         if (item.name == b.type) h.push(item)
-            //     })
-            //     if (h.length == 0) {
-            //         hh.push({ name: b.type, showName: getBalanceProduct(b.type).label,func:(v)=>{                        
-            //             if(Number(v)<100) {
-            //                 return <span style={{color:'red'}}>{v}</span>
-            //             }else {
-            //                 return <span style={{color:'green'}}>{v}</span>
-            //             }
-            //         } })
-            //     }
-            // })
+            balances.map(b=>{
+                if(b.user_id == item.id) {
+                    d[b.balance_type.type] = b.balance
+                    let h = []
+                    hh.map(item=>{
+                        if(item.name == b.balance_type.type) h.push(item)
+                    })
+                    if (h.length == 0) {
+                        hh.push({ name: b.balance_type.type, showName: b.balance_type.type,func:(v)=>{                        
+                            if(Number(v)<100) {
+                                return <span style={{color:'red'}}>{v}</span>
+                            }else {
+                                return <span style={{color:'green'}}>{v}</span>
+                            }
+                        } })
+                    }        
+                }
+            })
             items.push(d)
-        })
+        })        
         setHeader(hh)
         setCustomers(items)
     }
@@ -254,7 +242,7 @@ const Balance = () => {
             <FamilyBar
                 onCustomerSearch={handleCustomerSearch}
                 // onSwitch={handleSwitch}
-                balance={balance}
+                // balance={balance}
                 onSnapshot={handleBalanceSnapshot}
             />
             {totalCount == 0 && <Alert severity={"info"}>Ops! There is not any familys or members</Alert>}

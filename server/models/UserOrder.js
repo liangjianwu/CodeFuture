@@ -4,6 +4,7 @@ module.exports = db.defineModel('user_order', {
     user_id:db.Sequelize.INTEGER,   
     member_id:db.Sequelize.INTEGER, 
     member_name:db.Sequelize.STRING(45),
+    balance_typeid:db.Sequelize.INTEGER,
     product_id:db.Sequelize.INTEGER,
     product_name:db.Sequelize.STRING(128),
     product_price:db.Sequelize.DECIMAL(2),    

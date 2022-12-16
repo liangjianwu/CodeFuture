@@ -82,6 +82,7 @@ const apis = {
     snapshotBalance:(headers)=>api.get(`/accounting/snapshotbalance`,headers),
     loadMembers:(page,pagesize,countdata,headers)=>api.get(`/accounting/loadmembers?countdata=`+countdata+`&page=`+page+`&pagesize=`+pagesize+`&time=`+Date.now(),headers),
     recharge:(data,headers)=>api.post(`/accounting/recharge`,data,headers),
+    userbalanceRecharge:(data,headers) => api.post('/accounting/userbalance',data,headers),
     bcharge:async (data,headers)=>{return await api.post(`/accounting/charge`,data,headers)},
     charge:(data,headers)=>api.post(`/accounting/charge`,data,headers),
     memberSearch:(data,page,rows,countdata,headers)=>api.get(`/accounting/searchmember?value=`+encodeURIComponent(data) + '&page='+page+'&pagesize='+rows+'&countdata='+countdata+`&time=`+Date.now(),headers),
@@ -93,6 +94,7 @@ const apis = {
     gettransaction:(data,headers)=>api.post('/accounting/gettransaction',data,headers),
     editTransaction:(data,headers)=>api.post('/accounting/edittransaction',data,headers),
     getAccountingReport:(from,to,orderfield,order,headers) => api.get('/accounting/getreport?from='+from+'&to='+to+(orderfield && order?('&orderfield='+orderfield + '&order='+order):""),headers),
+    
     //product
     loadProducts:(page,rows,countdata,headers)=>api.get(`/product/loadproducts?page=`+page+'&pagesize='+rows+'&countdata='+countdata+`&time=`+Date.now(),headers),
     editProduct:(data,headers)=>api.post(`/product/editproduct`,data,headers),
@@ -168,6 +170,43 @@ const apis = {
     loadResources:(type,page,pagesize,countdata,headers) => api.get(`/resource/loadresources?type=`+type+`&page=`+page+'&pagesize='+pagesize+'&countdata='+countdata+`&time=`+Date.now(),headers),
     postResource:(data,headers)=>api.post('/resource/postresource',data,headers),
     resourceStatus:(id,status,headers)=>api.post('/resource/changestatus',{id:id,status:status},headers),
+
+    //setting
+    userPost:(data,headers)=>api.post('/setting/user',data,headers),
+    userGet:(id,headers)=>api.get('/setting/user?id='+id,headers),
+    userDelete:(id,headers)=>api.delete('/setting/user?id='+id,headers),
+    userPut:(data,headers) => api.put('/setting/user',data,headers),
+    
+    menuPost:(data,headers)=>api.post('/setting/menu',data,headers),
+    menuGet:(id,headers)=>api.get('/setting/menu?id='+id,headers),
+    menuDelete:(id,headers)=>api.delete('/setting/menu?id='+id,headers),
+    menuPut:(data,headers) => api.put('/setting/menu',data,headers),
+
+    rolePost:(data,headers)=>api.post('/setting/role',data,headers),
+    roleGet:(id,headers)=>api.get('/setting/role?id='+id,headers),
+    roleDelete:(id,headers)=>api.delete('/setting/role?id='+id,headers),
+    rolePut:(data,headers) => api.put('/setting/role',data,headers),
+    
+    userrolePost:(data,headers)=>api.post('/setting/userrole',data,headers),
+    userroleGet:(user_id,headers)=>api.get('/setting/userrole?user_id='+user_id,headers),
+    roleuserGet:(role_id,headers)=>api.get('/setting/userrole?role_id='+role_id,headers),
+    userroleDelete:(id,headers)=>api.delete('/setting/userrole?id='+id,headers),
+    userrolePut:(data,headers) => api.put('/setting/userrole',data,headers),
+    
+    roleauthPost:(data,headers)=>api.post('/setting/roleauth',data,headers),
+    roleauthGet:(id,headers)=>api.get('/setting/roleauth?id='+id,headers),
+    roleauthDelete:(id,headers)=>api.delete('/setting/roleauth?id='+id,headers),
+    roleauthPut:(data,headers) => api.put('/setting/roleauth',data,headers),
+    
+    balancePost:(data,headers)=>api.post('/setting/balance',data,headers),
+    balanceGet:(id,headers)=>api.get('/setting/balance?id='+id,headers),
+    balanceDelete:(id,headers)=>api.delete('/setting/balance?id='+id,headers),
+    balancePut:(data,headers) => api.put('/setting/balance',data,headers),
+
+    areaPost:(data,headers)=>api.post('/setting/area',data,headers),
+    areaGet:(id,headers)=>api.get('/setting/area?id='+id,headers),
+    areaDelete:(id,headers)=>api.delete('/setting/area?id='+id,headers),
+    areaPut:(data,headers) => api.put('/setting/area',data,headers),
 }
 
 export default apis

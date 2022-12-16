@@ -10,7 +10,6 @@ module.exports.loadProducts = {
         let { page, pagesize, countdata } = req.query
         pagesize = Number(pagesize)
         page = Number(page)
-        let uid = req.uid
         MerchantProduct.hasOne(Coach, { sourceKey: 'coach_id', foreignKey: 'id' })
         doWithTry(res, async () => {
             let where = { mid: req.mid, status: 1 }

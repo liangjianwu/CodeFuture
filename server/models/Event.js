@@ -1,6 +1,7 @@
 const db = require('../db/db');
 
-module.exports = db.defineModel('event', {        
+module.exports = db.defineModel('event', {     
+    area_id:db.Sequelize.INTEGER,   
     name:db.Sequelize.STRING(128),
     code:db.Sequelize.STRING(16),
     sign:db.Sequelize.INTEGER,

@@ -1,16 +1,21 @@
-import { useState } from 'react';
-import { Button, TextField,  Grid, Box, Typography, Alert, } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Button, TextField, FormControl,InputLabel,Select,MenuItem, Grid, Box, Typography, Alert, } from '@mui/material';
 import apis from '../../../api';
 import { apiResult, formToJson, getUserSession} from '../../../Utils/Common';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
+import { loadAreas } from '../../../Component/DataLoader';
 
 const UserEditForm = (props) => {
     const {user,onClose} = props
     const [fieldErrors, setFieldErrors] = useState()    
     const [error, setError] = useState()
+    const [areas,setAreas] = useState()
+    const [area_id,setAreaId] = useState(user?.area_id)
     const session = getUserSession(apis)
-
+    useEffect(()=>{
+        loadAreas(apis,setAreas,setError)
+    },[])
     const handleSubmit = (event) => {
         setFieldErrors()
         setError()
@@ -18,6 +23,7 @@ const UserEditForm = (props) => {
         const data = new FormData(event.currentTarget);
         const postData = formToJson(data)
         postData.id = user ? user.id:0
+        postData.area_id = area_id
         apis.editUser(postData).then(ret => {
             apiResult(ret, (data) => {                
                 onClose && onClose(true)
@@ -54,6 +60,22 @@ const UserEditForm = (props) => {
                                 error={fieldErrors && fieldErrors.phone ? true : false}
                                 helperText={fieldErrors && fieldErrors.phone ? fieldErrors.phone : ''}
                             />
+                        </Grid>
+                        <Grid item xs={12} sm={12}>
+                            <FormControl fullWidth>
+                                <InputLabel id="demo-simple-select-autowidth-label">Area</InputLabel>
+                                <Select labelId="demo-simple-select-autowidth-label"
+                                    id="area_id"
+                                    onChange={(e) => { setAreaId(e.target.value) }}
+                                    label="Select Area"
+                                    defaultValue={user?.area_id}
+                                >   
+                                    <MenuItem value={0}>All</MenuItem>
+                                    {areas && areas.map((p, idx) => {
+                                        return <MenuItem key={idx} value={p.id}>{p.name}</MenuItem>
+                                    })}
+                                </Select>
+                            </FormControl>
                         </Grid>
                     </Grid>
 

@@ -1,0 +1,14 @@
+[32mLoad router:accounting[39m
+[32mLoad router:coach[39m
+[32mLoad router:email[39m
+[32mLoad router:event[39m
+[32mLoad router:member[39m
+[32mLoad router:merchant[39m
+[32mLoad router:product[39m
+[32mLoad router:resource[39m
+[32mLoad router:role[39m
+[32mLoad router:service[39m
+[32mLoad router:setting[39m
+[32mLoad router:upload[39m
+[32mLoad router:user[39m
+Server running on port 7012

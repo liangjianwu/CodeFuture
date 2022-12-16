@@ -16,7 +16,7 @@ exports.validate = (method) => {
                 query('countdata').exists().notEmpty().isInt().isIn([0,1]),
                 query('orderfield').exists().isString().isLength({min:2,max:16}),
                 query('order').exists().isIn(['desc','asc']),
-                query('type').optional().isIn(['privateclass','groupclass']),
+                //query('type').optional().isIn(['privateclass','groupclass']),
             ]
         }
         case 'balancesnapshot':{
@@ -45,6 +45,17 @@ exports.validate = (method) => {
                 body('customerid').exists().notEmpty().isInt({min:0}),
                 body('familyid').exists().notEmpty().isInt({min:0}),
                 body('type').exists().notEmpty().isString().isLength({min:1,max:16}),
+                body('note').optional().isString().isLength({min:0,max:128}),
+                body('invoice').optional().isString().isLength({min:0,max:32}),
+                body('date').exists().isDate(),
+            ]
+        }
+        case 'userbalance.post':{
+            return [
+                body('amount','The amount should be 0~10000').exists().notEmpty().isDecimal({min:0.01,max:10000}),
+                body('customerid').exists().notEmpty().isInt({min:0}),
+                body('familyid').exists().notEmpty().isInt({min:0}),
+                body('balance_typeid').exists().notEmpty().isInt({min:1}),
                 body('note').optional().isString().isLength({min:0,max:128}),
                 body('invoice').optional().isString().isLength({min:0,max:32}),
                 body('date').exists().isDate(),

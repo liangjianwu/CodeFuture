@@ -10,7 +10,8 @@ const UserAuth = model.MUserAuth
 const UserVerify = model.MUserVerify
 const UserProfile = model.MUserProfile
 const Coach = model.Coach
-
+const Role = model.Role
+const UserRole = model.UserRole
 module.exports.register = async (req, res) => {
     //@methed:post
     //@validate:register 
@@ -152,10 +153,12 @@ module.exports.resetpwd = async (req, res) => {
                         return returnError(res, 100032)
                     }
                     UserVerify.update({ verify_status: 1 }, { where: { id: uv.id } })
-                    User.update({ email_verified: 1, passwd: newpwd }, { where: { id: user.id } }).then(num => {
+                    User.update({ email_verified: 1, passwd: newpwd }, { where: { id: user.id } }).then(num => {                        
                         if (num == 1) {
                             return returnSuccess(res, 100003)
-                        } else {
+                        } else if(num == 0){
+                            return returnError(res, 190035)
+                        }else {
                             return returnError(res, 190032)
                         }
                     }).catch(err => {
@@ -242,7 +245,7 @@ module.exports.login = (req, res) => {
         return returnError(res, 190043)
     })
 }
-module.exports.logout = {
+module.exports.signout = {
     get: async (req, res) => {
         UserAuth.findOne({ where: { user_id: req.uid } }).then(ua => {
             if (ua) {
@@ -257,7 +260,7 @@ module.exports.logout = {
         })
     }
 }
-module.exports.getprofile = {
+module.exports.profile = {
     get: async (req, res) => {
         User.findOne({ where: { id: req.uid, status: 1 } }).then(user => {
             if (user) {
@@ -279,38 +282,71 @@ module.exports.getprofile = {
             ErrorHint(e)
             return returnError(res, 190061)
         })
+    },
+    put: async (req, res) => {
+        User.findOne({ where: { id: req.uid, status: 1 } }).then(user => {
+            if (user) {
+                req.body.mid = user.mid
+                UserProfile.findOne({ where: { user_id: req.uid } }).then(ua => {
+                    if (ua) {
+                        ua.update(req.body).then(num => {
+                            return returnSuccess(res, 100061)
+                        }).catch(e => {
+                            ErrorHint(e)
+                            return returnError(res, 100063)
+                        })
+                    } else {
+                        req.body.user_id = user.id
+                        UserProfile.create(req.body).then(up1 => {
+                            return returnSuccess(res, 100061)
+                        }).catch(e => {
+                            ErrorHint(e)
+                            return returnError(res, 100063)
+                        })
+                    }
+                }).catch(e => {
+                    ErrorHint(e)
+                    return returnError(res, 190062)
+                })
+            } else {
+                return returnError(res, 100062)
+            }
+        }).catch(e => {
+            ErrorHint(e)
+            return returnError(res, 190061)
+        })
+    },
+    post: async (req, res) => {
+        User.findOne({ where: { id: req.uid, status: 1 } }).then(user => {
+            if (user) {
+                req.body.mid = user.mid
+                UserProfile.findOne({ where: { user_id: req.uid } }).then(ua => {
+                    if (ua) {
+                        ua.update(req.body).then(num => {
+                            return returnSuccess(res, 100061)
+                        }).catch(e => {
+                            ErrorHint(e)
+                            return returnError(res, 100063)
+                        })
+                    } else {
+                        req.body.user_id = user.id
+                        UserProfile.create(req.body).then(up1 => {
+                            return returnSuccess(res, 100061)
+                        }).catch(e => {
+                            ErrorHint(e)
+                            return returnError(res, 100063)
+                        })
+                    }
+                }).catch(e => {
+                    ErrorHint(e)
+                    return returnError(res, 190062)
+                })
+            } else {
+                return returnError(res, 100062)
+            }
+        }).catch(e => {
+            ErrorHint(e)
+            return returnError(res, 190061)
+        })
     }
-}
-module.exports.setprofile = async (req, res) => {
-    User.findOne({ where: { id: req.uid, status: 1 } }).then(user => {
-        if (user) {
-            req.body.mid = user.mid
-            UserProfile.findOne({ where: { user_id: req.uid } }).then(ua => {
-                if (ua) {
-                    ua.update(req.body).then(num => {
-                        return returnSuccess(res, 100061)
-                    }).catch(e => {
-                        ErrorHint(e)
-                        return returnError(res, 100063)
-                    })
-                } else {
-                    req.body.user_id = user.id
-                    UserProfile.create(req.body).then(up1 => {
-                        return returnSuccess(res, 100061)
-                    }).catch(e => {
-                        ErrorHint(e)
-                        return returnError(res, 100063)
-                    })
-                }
-            }).catch(e => {
-                ErrorHint(e)
-                return returnError(res, 190062)
-            })
-        } else {
-            return returnError(res, 100062)
-        }
-    }).catch(e => {
-        ErrorHint(e)
-        return returnError(res, 190061)
-    })
 }

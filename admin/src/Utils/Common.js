@@ -21,7 +21,7 @@ const apiResult = (ret,successCallback,failCallback,fieldCheckCallback)=>{
 const formToJson = (formData)=>{
     const data = {};
     formData.forEach((value, key) => {
-        data[key] = key === 'passwd'?hex_md5(value):value        
+        data[key] = key === 'passwd' ?(value && value.length>0?hex_md5(value):undefined):value        
     });
     return data;
 }

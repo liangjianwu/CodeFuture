@@ -76,6 +76,7 @@ module.exports.loadUser = {
             data.user_profile ? ret.data.push({
                 id: data.id,
                 email: data.email,
+                area_id:data.area_id,
                 firstname: data.user_profile.firstname,
                 lastname: data.user_profile.lastname,
                 name: data.user_profile.name, phone: data.user_profile.phone, create_time: data.create_time,
@@ -84,6 +85,7 @@ module.exports.loadUser = {
             }) : ret.data.push({
                 id: data.id,
                 email: data.email,
+                area_id:data.area_id,
                 create_time: data.create_time,
                 status: data.status,
                 members: []
@@ -149,7 +151,7 @@ module.exports.loadCustomer = {
 module.exports.editCustomerInfo = async (req, res) => {
     return doWithTry(res, async () => {
         let keys = Object.keys(req.body)
-        let k = ['firstname', 'lastname', 'gender', 'birthday', 'phone', 'email', 'user_id']
+        let k = ['firstname', 'lastname', 'gender', 'birthday', 'phone', 'email', 'user_id','area_id']
         let data = {}
         let id = req.body.id
         k.map(kk => {
@@ -226,9 +228,9 @@ module.exports.getCustomer = {
     })
 }
 }
-module.exports.editUserInfo = async (req, res) => {
+module.exports.editUser = async (req, res) => {
     return doWithTry(res, async () => {
-        let k = ['firstname', 'lastname', 'phone', 'email']
+        let k = ['firstname', 'lastname', 'phone', 'email','area_id']
         let data = {}
         let id = req.body.id
         k.map(kk => {
@@ -248,6 +250,10 @@ module.exports.editUserInfo = async (req, res) => {
                     return returnError(res, 100001)
                 }
                 user.email = data.email
+                user.area_id = data.area_id
+                await user.save()
+            }else {
+                user.area_id = data.area_id
                 await user.save()
             }
             await UserProfile.update(data, { where: { user_id: id, mid: req.mid } })
@@ -258,6 +264,7 @@ module.exports.editUserInfo = async (req, res) => {
             userData.passwd = md5(md5('123456'))
             userData.email = data.email
             userData.email_verified = 0
+            userData.area_id = data.area_id
             let member = await User.create(userData)
             data.user_id = member.id
             data.mid = req.mid

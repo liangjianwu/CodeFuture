@@ -4,6 +4,7 @@ module.exports = db.defineModel('user_balance_record', {
     user_id:db.Sequelize.INTEGER,    
     member_id:db.Sequelize.INTEGER,
     balance_id:db.Sequelize.INTEGER,
+    balance_typeid:db.Sequelize.INTEGER,
     amount:db.Sequelize.DECIMAL(2),
     pre_balance:db.Sequelize.DECIMAL(2),
     action:db.Sequelize.STRING(16),

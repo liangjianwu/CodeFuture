@@ -7,7 +7,7 @@ exports.validate = (method) => {
                 body('form','the amount of the items is between 1~50').exists().isArray({min:1,max:50}),
             ]
         }
-        case 'customer.edit': {
+        case 'editcustomerinfo': {
             return [
                 body('id').exists().isInt({ min: 0}),
                 body('firstname').optional().isString().isLength({ min: 2, max: 32 }),
@@ -16,6 +16,7 @@ exports.validate = (method) => {
                 body('phone').optional().isString().isMobilePhone(),
                 body('email').optional().isEmail(),
                 body('birthday').optional().isDate(),
+                body('area_id').exists().isInt({min:1}),               
             ]
         }
         case 'edituser': {
@@ -24,7 +25,8 @@ exports.validate = (method) => {
                 body('firstname').exists().isString().isLength({ min: 2, max: 32 }),
                 body('lastname').exists().isString().isLength({ min: 2, max: 32 }),
                 body('phone').exists().isString().isMobilePhone(),
-                body('email').exists().isEmail(),                
+                body('email').exists().isEmail(), 
+                body('area_id').exists().isInt({min:1}),               
             ]
         }
         case 'customer.edit.ext': {
@@ -32,7 +34,7 @@ exports.validate = (method) => {
                 body('id').exists().notEmpty().isInt({ min: 0 }),
             ]
         }
-        case 'customer.load': {
+        case 'getcustomer': {
             return [
                 query('id').exists().notEmpty().isInt({ min: 0 }),
             ]
@@ -47,7 +49,7 @@ exports.validate = (method) => {
                 query('order').optional().isIn(['desc','asc']),
             ]
         }
-        case 'group.create': {
+        case 'creategroup': {
             return [
                 body('name').exists().notEmpty().isString().isLength({ min: 2, max: 32 }),
             ]
