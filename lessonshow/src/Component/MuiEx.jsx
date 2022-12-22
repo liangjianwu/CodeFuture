@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material/styles';
 import MuiDrawer from '@mui/material/Drawer';
 import MuiAppBar from '@mui/material/AppBar';
-import { PowerInputSharp, Visibility, VisibilityOff } from "@mui/icons-material";
+import {  Visibility, VisibilityOff } from "@mui/icons-material";
 
 const ResendButton = (props) => {
     const [resetCount, setCount] = useState(props.count)
@@ -95,7 +95,7 @@ const SingleSelector = (props) => {
     return (<div sx={{...props.sx}}>
         {props.label && <Typography>{props.label}</Typography>}
         {props.items && props.items.map((item,index)=>{            
-            const isSelected = (props.values?(props.values[index] == selected):(selected == index))            
+            const isSelected = (props.values?(props.values[index] === selected):(selected === index))            
             return <FormControlLabel key={index} onChange={() => handleChange(index)} label={item} control={<Radio checked={isSelected} onChange={() => handleChange(index)} />} />    
         })}
     </div>)
@@ -127,7 +127,7 @@ const MultiSelector = (props) => {
 }
 const Title = (props) => {
     return (
-        <Typography component="h2" variant="h6" color="primary" gutterBottom>
+        <Typography component="h2" variant="h6" color="primary" sx={props.sx} gutterBottom>
             {props.children}
         </Typography>
     );
@@ -166,7 +166,7 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
         '& .MuiDrawer-paper': {
             position: 'relative',
             whiteSpace: 'nowrap',
-            width: drawWidth,
+            width: theme.spacing(30),
             transition: theme.transitions.create('width', {
                 easing: theme.transitions.easing.sharp,
                 duration: theme.transitions.duration.enteringScreen,
@@ -178,9 +178,9 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
                     easing: theme.transitions.easing.sharp,
                     duration: theme.transitions.duration.leavingScreen,
                 }),
-                width: theme.spacing(7),
+                width: theme.spacing(9),
                 [theme.breakpoints.down('lg')]: {
-                    width: 0,//theme.spacing(9),
+                    width: theme.spacing(9),
                 },
             }),
         },

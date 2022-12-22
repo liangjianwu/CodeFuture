@@ -121,14 +121,14 @@ const Balance = () => {
             },
         ]
         data.map(item => {
-            let d = { id: item.id, parent: item.user_profile.name, user_id: item.user_profile.user_id, phone: item.user_profile.phone, members: [], balance: item.user_balance?.balance }
+            let d = { id: item.id, parent: item.user_profile.name, user_id: item.user_profile.user_id, phone: item.user_profile.phone, members: [] }
             members.map(b => {
                 if (b.user_id == item.id) {
                     d.members.push({ id: b.id, name: b.name, status: b.status,level:b.level })
                 }
             })
             balances.map(b=>{
-                if(b.user_id == item.id) {
+                if(b.user_id == item.id && b.balance_type) {
                     d[b.balance_type.type] = b.balance
                     let h = []
                     hh.map(item=>{

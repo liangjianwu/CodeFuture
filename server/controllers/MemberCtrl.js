@@ -29,11 +29,11 @@ module.exports.loginLoad = {
     }
 }
 module.exports.getMemberInfoStruct = {
-    get:async (req, res) => {
-    return findOne(res, MemberInfoStruct, { mid: req.mid }, async (mis) => {
-        return returnResult(res, mis && mis.struct ? JSON.parse(mis.struct) : [])
-    })
-}
+    get: async (req, res) => {
+        return findOne(res, MemberInfoStruct, { mid: req.mid }, async (mis) => {
+            return returnResult(res, mis && mis.struct ? JSON.parse(mis.struct) : [])
+        })
+    }
 }
 module.exports.setMemberInfoStruct = async (req, res) => {
     let { form } = req.body
@@ -50,108 +50,108 @@ module.exports.setMemberInfoStruct = async (req, res) => {
 }
 
 module.exports.loadUser = {
-    get:async (req, res) => {
-    let { page, pagesize, countdata, status, orderfield, order } = req.query
-    pagesize = Number(pagesize)
-    page = Number(page)
-    try {
-        let where = { mid: req.mid }
-        if (status >= -1) {
-            where.status = status
-        }
-        let ret = { total: 0, data: [] }
-        if (countdata) {
-            ret.total = await User.count({ where: where })
-        }
-        User.hasOne(UserProfile, { foreignKey: 'user_id' })
-        let datas = await User.findAll({
-            where: where,
-            include: [{ model: UserProfile, attributes: ['firstname', 'lastname', 'name', 'email', 'phone'] }],
-            order: orderfield == 'name' ? [[UserProfile, 'name', order ? order : 'desc']] : [['id', order ? order : 'desc']],
-            limit: pagesize,
-            offset: page * pagesize,
-        })
-        let ids = []
-        datas.map(data => {
-            data.user_profile ? ret.data.push({
-                id: data.id,
-                email: data.email,
-                area_id:data.area_id,
-                firstname: data.user_profile.firstname,
-                lastname: data.user_profile.lastname,
-                name: data.user_profile.name, phone: data.user_profile.phone, create_time: data.create_time,
-                status: data.status,
-                members: []
-            }) : ret.data.push({
-                id: data.id,
-                email: data.email,
-                area_id:data.area_id,
-                create_time: data.create_time,
-                status: data.status,
-                members: []
+    get: async (req, res) => {
+        let { page, pagesize, countdata, status, orderfield, order } = req.query
+        pagesize = Number(pagesize)
+        page = Number(page)
+        try {
+            let where = { mid: req.mid }
+            if (status >= -1) {
+                where.status = status
+            }
+            let ret = { total: 0, data: [] }
+            if (countdata) {
+                ret.total = await User.count({ where: where })
+            }
+            User.hasOne(UserProfile, { foreignKey: 'user_id' })
+            let datas = await User.findAll({
+                where: where,
+                include: [{ model: UserProfile, attributes: ['firstname', 'lastname', 'name', 'email', 'phone'] }],
+                order: orderfield == 'name' ? [[UserProfile, 'name', order ? order : 'desc']] : [['id', order ? order : 'desc']],
+                limit: pagesize,
+                offset: page * pagesize,
             })
-            ids.push(data.id)
-        })
-        let members = await Member.findAll({ where: { user_id: ids } })
-        ret.data.map(data => {
-            members.map(member => {
-                if (member.user_id == data.id) {
-                    data.members.push(member)
-                }
+            let ids = []
+            datas.map(data => {
+                data.user_profile ? ret.data.push({
+                    id: data.id,
+                    email: data.email,
+                    area_id: data.area_id,
+                    firstname: data.user_profile.firstname,
+                    lastname: data.user_profile.lastname,
+                    name: data.user_profile.name, phone: data.user_profile.phone, create_time: data.create_time,
+                    status: data.status,
+                    members: []
+                }) : ret.data.push({
+                    id: data.id,
+                    email: data.email,
+                    area_id: data.area_id,
+                    create_time: data.create_time,
+                    status: data.status,
+                    members: []
+                })
+                ids.push(data.id)
             })
-        })
-        return returnResult(res, ret)
-    } catch (e) {
-        ErrorHint(e)
-        return returnError(res, 900001)
+            let members = await Member.findAll({ where: { user_id: ids } })
+            ret.data.map(data => {
+                members.map(member => {
+                    if (member.user_id == data.id) {
+                        data.members.push(member)
+                    }
+                })
+            })
+            return returnResult(res, ret)
+        } catch (e) {
+            ErrorHint(e)
+            return returnError(res, 900001)
+        }
     }
-}
 }
 
 module.exports.loadCustomer = {
-    get:async (req, res) => {
-    let { page, pagesize, countdata, status, orderfield, order } = req.query
-    pagesize = Number(pagesize)
-    page = Number(page)
-    orderfield = orderfield ? orderfield : 'id'
-    order = order ? order : 'desc'
-    try {
+    get: async (req, res) => {
+        let { page, pagesize, countdata, status, orderfield, order } = req.query
+        pagesize = Number(pagesize)
+        page = Number(page)
+        orderfield = orderfield ? orderfield : 'id'
+        order = order ? order : 'desc'
+        try {
 
-        let where = { mid: req.mid }
-        if (status >= -1) {
-            where.status = status
+            let where = { mid: req.mid }
+            if (status >= -1) {
+                where.status = status
+            }
+            let ret = { total: 0 }
+            if (countdata) {
+                ret.total = await Member.count({ where: where })
+            }
+            Member.hasMany(MemberInfo, { foreignKey: 'member_id' })
+            Member.hasMany(MemberGroup, { foreignKey: 'member_id' })
+            Member.belongsTo(UserProfile, { foreignKey: 'user_id', targetKey: 'user_id' })
+            ret.data = await Member.findAll({
+                where: where,
+                include: [{ model: MemberInfo, attributes: ['key', 'value'] },
+                { model: MemberGroup, attributes: ['group_id'], where: { status: 1 }, required: false },
+                { model: UserProfile, attributes: ['name', 'email', 'phone'] }],
+                order: [[orderfield, order]],
+                limit: pagesize,
+                offset: page * pagesize,
+            })
+            ret.group = await Group.findAll({
+                where: { mid: req.mid, status: 1 },
+                attributes: ["id", "name"]
+            })
+            return returnResult(res, ret)
+        } catch (e) {
+            ErrorHint(e)
+            return returnError(res, 900001)
         }
-        let ret = { total: 0 }
-        if (countdata) {
-            ret.total = await Member.count({ where: where })
-        }
-        Member.hasMany(MemberInfo, { foreignKey: 'member_id' })
-        Member.hasMany(MemberGroup, { foreignKey: 'member_id' })
-        Member.belongsTo(UserProfile, { foreignKey: 'user_id', targetKey: 'user_id' })
-        ret.data = await Member.findAll({
-            where: where,
-            include: [{ model: MemberInfo, attributes: ['key', 'value'] },
-            { model: MemberGroup, attributes: ['group_id'], where: { status: 1 }, required: false },
-            { model: UserProfile, attributes: ['name', 'email', 'phone'] }],
-            order: [[orderfield, order]],
-            limit: pagesize,
-            offset: page * pagesize,
-        })
-        ret.group = await Group.findAll({
-            where: { mid: req.mid, status: 1 },
-            attributes: ["id", "name"]
-        })
-        return returnResult(res, ret)
-    } catch (e) {
-        ErrorHint(e)
-        return returnError(res, 900001)
     }
-}
 }
 module.exports.editCustomerInfo = async (req, res) => {
     return doWithTry(res, async () => {
         let keys = Object.keys(req.body)
-        let k = ['firstname', 'lastname', 'gender', 'birthday', 'phone', 'email', 'user_id','area_id']
+        let k = ['firstname', 'lastname', 'gender', 'birthday', 'phone', 'email', 'user_id', 'area_id']
         let data = {}
         let id = req.body.id
         k.map(kk => {
@@ -201,36 +201,36 @@ module.exports.editCustomerInfo = async (req, res) => {
     })
 }
 module.exports.getCustomer = {
-    get:async (req, res) => {
-    return doWithTry(res, async () => {
-        let member = req.query.id > 0 ? await Member.findOne({ where: { id: req.query.id } }) : { id: 0 }
-        if (member) {
-            let info = req.query.id > 0 ? await MemberInfo.findAll({ where: { member_id: member.id } }) : []
-            let struct = await MemberInfoStruct.findOne({ where: { mid: req.mid } })
-            let mstruct = []
-            if (struct) {
-                mstruct = JSON.parse(struct.struct)
+    get: async (req, res) => {
+        return doWithTry(res, async () => {
+            let member = req.query.id > 0 ? await Member.findOne({ where: { id: req.query.id } }) : { id: 0 }
+            if (member) {
+                let info = req.query.id > 0 ? await MemberInfo.findAll({ where: { member_id: member.id } }) : []
+                let struct = await MemberInfoStruct.findOne({ where: { mid: req.mid } })
+                let mstruct = []
+                if (struct) {
+                    mstruct = JSON.parse(struct.struct)
+                }
+                mstruct.unshift({
+                    type: "section", label: "Basic information", items: [
+                        { type: "input", name: "firstname", label: "First name" },
+                        { type: "input", name: "lastname", label: "Last name" },
+                        { type: "radio", name: "gender", options: 'Male,Female,Other' },
+                        { type: "date", name: "birthday", label: "Birthday" },
+                        { type: "input", name: "phone", label: "Phone" },
+                        { type: "input", name: "email", label: "Email" },
+                    ]
+                })
+                return returnResult(res, { member: member, info: info, struct: mstruct })
+            } else {
+                return returnError(res, 300003)
             }
-            mstruct.unshift({
-                type: "section", label: "Basic information", items: [
-                    { type: "input", name: "firstname", label: "First name" },
-                    { type: "input", name: "lastname", label: "Last name" },
-                    { type: "radio", name: "gender", options: 'Male,Female,Other' },
-                    { type: "date", name: "birthday", label: "Birthday" },
-                    { type: "input", name: "phone", label: "Phone" },
-                    { type: "input", name: "email", label: "Email" },
-                ]
-            })
-            return returnResult(res, { member: member, info: info, struct: mstruct })
-        } else {
-            return returnError(res, 300003)
-        }
-    })
-}
+        })
+    }
 }
 module.exports.editUser = async (req, res) => {
     return doWithTry(res, async () => {
-        let k = ['firstname', 'lastname', 'phone', 'email','area_id']
+        let k = ['firstname', 'lastname', 'phone', 'email', 'area_id']
         let data = {}
         let id = req.body.id
         k.map(kk => {
@@ -252,7 +252,7 @@ module.exports.editUser = async (req, res) => {
                 user.email = data.email
                 user.area_id = data.area_id
                 await user.save()
-            }else {
+            } else {
                 user.area_id = data.area_id
                 await user.save()
             }
@@ -291,51 +291,51 @@ module.exports.createGroup = async (req, res) => {
     })
 }
 module.exports.getGroups = {
-    get:async (req, res) => {
-    return doWithTry(res, async () => {
-        return returnResult(res, await loadGroups(req))
-    })
-}
+    get: async (req, res) => {
+        return doWithTry(res, async () => {
+            return returnResult(res, await loadGroups(req))
+        })
+    }
 }
 
 module.exports.getGroupCustomers = {
-    get:async (req, res) => {
-    let { id, page, pagesize, countdata, status } = req.query
-    return doWithTry(res, async () => {
-        Member.belongsTo(MemberGroup, { foreignKey: "id", targetKey: 'member_id' })
-        Member.belongsTo(UserProfile, { foreignKey: 'user_id', targetKey: 'user_id' })
-        Member.hasMany(MemberGroup, { foreignKey: 'member_id' })
-        let retdata = { total: 0, data: [] }
-        let where = { mid: req.mid }
-        if (status >= -1) {
-            where.status = status
-        }
-        if (countdata == 1) {
-            retdata.total = await Member.count({
+    get: async (req, res) => {
+        let { id, page, pagesize, countdata, status } = req.query
+        return doWithTry(res, async () => {
+            Member.belongsTo(MemberGroup, { foreignKey: "id", targetKey: 'member_id' })
+            Member.belongsTo(UserProfile, { foreignKey: 'user_id', targetKey: 'user_id' })
+            Member.hasMany(MemberGroup, { foreignKey: 'member_id' })
+            let retdata = { total: 0, data: [] }
+            let where = { mid: req.mid }
+            if (status >= -1) {
+                where.status = status
+            }
+            if (countdata == 1) {
+                retdata.total = await Member.count({
+                    where: where,
+                    include: [{
+                        model: MemberGroup,
+                        where: { group_id: id, mid: req.mid },
+                    }]
+                })
+            }
+            retdata.data = await Member.findAll({
+                attributes: ['id', 'name', 'gender', 'birthday', 'create_time', 'status'],
                 where: where,
                 include: [{
                     model: MemberGroup,
-                    where: { group_id: id, mid: req.mid },
-                }]
+                    attributes: ['member_id'],
+                    where: { group_id: id, mid: req.mid, status: 1 },
+                },
+                { model: MemberGroup, attributes: ['group_id'], where: { status: 1 } },
+                {
+                    model: UserProfile,
+                    attributes: ['name', 'phone', 'email']
+                }], order: [['id', 'desc']], limit: 1 * pagesize, offset: page * pagesize
             })
-        }
-        retdata.data = await Member.findAll({
-            attributes: ['id', 'name', 'gender', 'birthday', 'create_time', 'status'],
-            where: where,
-            include: [{
-                model: MemberGroup,
-                attributes: ['member_id'],
-                where: { group_id: id, mid: req.mid, status: 1 },
-            },
-            { model: MemberGroup, attributes: ['group_id'], where: { status: 1 } },
-            {
-                model: UserProfile,
-                attributes: ['name', 'phone', 'email']
-            }], order: [['id', 'desc']], limit: 1 * pagesize, offset: page * pagesize
+            return returnResult(res, retdata)
         })
-        return returnResult(res, retdata)
-    })
-}
+    }
 }
 module.exports.addToGroup = async (req, res) => {
     let { ids, groups } = req.body
@@ -354,60 +354,77 @@ module.exports.addToGroup = async (req, res) => {
     })
 }
 module.exports.searchcustomer = {
-    get:async (req, res) => {
-    const { value, page, pagesize, countdata, status } = req.query
-    const Op = db.Sequelize.Op
-    return doWithTry(res, async () => {
-        Member.belongsTo(UserProfile, { foreignKey: 'user_id', targetKey: 'user_id' })
-        Member.hasMany(MemberGroup, { foreignKey: 'member_id' })
-        let retdata = { total: 0, data: [] }
-        let where = {
-            mid: req.mid,
-            [Op.or]: [
-                { name: { [Op.like]: `%${value}%` } },
-            ]
-        }
-        if (status >= -1) {
-            where.status = status
-        }
-        if (countdata == 1) {
-            retdata.total = await Member.count({
+    get: async (req, res) => {
+        const { value, page, pagesize, countdata, status } = req.query
+        const Op = db.Sequelize.Op
+        return doWithTry(res, async () => {
+            Member.belongsTo(UserProfile, { foreignKey: 'user_id', targetKey: 'user_id' })
+            Member.hasMany(MemberGroup, { foreignKey: 'member_id' })
+            let retdata = { total: 0, data: [] }
+            let where = {
+                mid: req.mid,
+                [Op.or]: [
+                    { name: { [Op.like]: `%${value}%` } },
+                ]
+            }
+            if (status >= -1) {
+                where.status = status
+            }
+            if (countdata == 1) {
+                retdata.total = await Member.count({
+                    where: where,
+                    include: [{
+                        model: UserProfile, attributes: ['name'],
+                    }],
+                })
+            }
+
+            retdata.data = await Member.findAll({
+                attributes: ['id', 'name', 'gender', 'birthday', 'create_time', 'status'],
                 where: where,
                 include: [{
-                    model: UserProfile, attributes: ['name'],
-                }],
+                    model: UserProfile, attributes: ['name', 'phone', 'email'],
+                }, { model: MemberGroup, attributes: ['group_id'], where: { status: 1 }, required: false }],
+                order: [["id", "desc"]],
+                limit: pagesize * 1,
+                offset: page * pagesize,
             })
-        }
-
-        retdata.data = await Member.findAll({
-            attributes: ['id', 'name', 'gender', 'birthday', 'create_time', 'status'],
-            where: where,
-            include: [{
-                model: UserProfile, attributes: ['name', 'phone', 'email'],
-            }, { model: MemberGroup, attributes: ['group_id'], where: { status: 1 }, required: false }],
-            order: [["id", "desc"]],
-            limit: pagesize * 1,
-            offset: page * pagesize,
+            return returnResult(res, retdata)
         })
-        return returnResult(res, retdata)
-    })
-}
+    }
 }
 module.exports.searchuser = {
-    get:async (req, res) => {
-    const { value, page, pagesize, countdata, status } = req.query
-    const Op = db.Sequelize.Op
-    return doWithTry(res, async () => {
-        let retdata = { total: 0, data: [] }
-        User.hasOne(UserProfile, { foreignKey: 'user_id' })
-        let where = {
-            mid: req.mid,
-        }
-        if (status >= -1) {
-            where.status = status
-        }
-        if (countdata == 1) {
-            retdata.total = await User.count({
+    get: async (req, res) => {
+        const { value, page, pagesize, countdata, status } = req.query
+        const Op = db.Sequelize.Op
+        return doWithTry(res, async () => {
+            let retdata = { total: 0, data: [] }
+            User.hasOne(UserProfile, { foreignKey: 'user_id' })
+            let where = {
+                mid: req.mid,
+            }
+            if (status >= -1) {
+                where.status = status
+            }
+            if (countdata == 1) {
+                retdata.total = await User.count({
+                    where: where,
+                    include: [{
+                        model: UserProfile,
+                        where: {
+                            mid: req.mid,
+                            [Op.or]: [
+                                { name: { [Op.like]: `%${value}%` } },
+                                { email: { [Op.like]: `%${value}%` } },
+                                { phone: { [Op.like]: `%${value}%` } },
+                            ]
+                        }
+                    }]
+                })
+            }
+
+            let datas = await User.findAll({
+                attributes: ["id", "email", "create_time", "status"],
                 where: where,
                 include: [{
                     model: UserProfile,
@@ -419,58 +436,41 @@ module.exports.searchuser = {
                             { phone: { [Op.like]: `%${value}%` } },
                         ]
                     }
-                }]
+                }],
+                order: [["id", "desc"]],
+                limit: pagesize * 1,
+                offset: page * pagesize,
             })
-        }
-
-        let datas = await User.findAll({
-            attributes: ["id", "email", "create_time", "status"],
-            where: where,
-            include: [{
-                model: UserProfile,
-                where: {
-                    mid: req.mid,
-                    [Op.or]: [
-                        { name: { [Op.like]: `%${value}%` } },
-                        { email: { [Op.like]: `%${value}%` } },
-                        { phone: { [Op.like]: `%${value}%` } },
-                    ]
-                }
-            }],
-            order: [["id", "desc"]],
-            limit: pagesize * 1,
-            offset: page * pagesize,
-        })
-        let ids = []
-        datas.map(data => {
-            data.user_profile ? retdata.data.push({
-                id: data.id,
-                email: data.email,
-                firstname: data.user_profile.firstname,
-                lastname: data.user_profile.lastname,
-                name: data.user_profile.name, phone: data.user_profile.phone, create_time: data.create_time,
-                status: data.status,
-                members: []
-            }) : retdata.data.push({
-                id: data.id,
-                email: data.email,
-                create_time: data.create_time,
-                status: data.status,
-                members: []
+            let ids = []
+            datas.map(data => {
+                data.user_profile ? retdata.data.push({
+                    id: data.id,
+                    email: data.email,
+                    firstname: data.user_profile.firstname,
+                    lastname: data.user_profile.lastname,
+                    name: data.user_profile.name, phone: data.user_profile.phone, create_time: data.create_time,
+                    status: data.status,
+                    members: []
+                }) : retdata.data.push({
+                    id: data.id,
+                    email: data.email,
+                    create_time: data.create_time,
+                    status: data.status,
+                    members: []
+                })
+                ids.push(data.id)
             })
-            ids.push(data.id)
-        })
-        let members = await Member.findAll({ where: { user_id: ids } })
-        retdata.data.map(data => {
-            members.map(member => {
-                if (member.user_id == data.id) {
-                    data.members.push(member)
-                }
+            let members = await Member.findAll({ where: { user_id: ids } })
+            retdata.data.map(data => {
+                members.map(member => {
+                    if (member.user_id == data.id) {
+                        data.members.push(member)
+                    }
+                })
             })
+            return returnResult(res, retdata)
         })
-        return returnResult(res, retdata)
-    })
-}
+    }
 }
 module.exports.removeFromGroup = async (req, res) => {
     doWithTry(res, async () => {

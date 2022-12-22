@@ -1,7 +1,7 @@
 import {Navigate} from 'react-router'
-import MemberIndex from '../member/Index'
-import EmailVerify from '../user/EmailVerify'
-import SignIn from '../user/SignIn'
+import Home from '../page/home/Home'
+import EmailVerify from '../page/user/EmailVerify'
+import SignIn from '../page/user/SignIn'
 import { getUserSession, sessionGet, sessionSet } from '../Utils/Common'
 const AuthRoute = (props) => {
     const {path,Component} = props
@@ -12,6 +12,6 @@ const AuthRoute = (props) => {
 const LoginRoute =(props) => {
     let session = getUserSession()
     let url = sessionGet('loginCallback')    
-    return session?(session.email_verified != 1 ? <EmailVerify /> :(url?<Navigate to={url}/>:<MemberIndex />)):<SignIn />
+    return session?(session.email_verified != 1 ? <EmailVerify /> :<Home />):<SignIn />
 }
 export { AuthRoute,LoginRoute }

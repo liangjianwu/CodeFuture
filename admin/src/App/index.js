@@ -44,6 +44,9 @@ import RoleSetting from '../Page/setting/Role';
 import MenuSetting from '../Page/setting/Menu';
 import BalanceSetting from '../Page/setting/Balance';
 import AreaSetting from '../Page/setting/Area';
+import Course from '../Page/lesson/Course';
+import Courses from '../Page/lesson/Courses';
+import Lesson from '../Page/lesson/Lesson';
 const App = () => {
   const theme = createTheme();
   return (
@@ -119,6 +122,11 @@ const App = () => {
             <Route path="menu/:roleid" element={<MenuSetting />} />
             <Route path="balance" element={<BalanceSetting />} />
             <Route path="area" element={<AreaSetting />} />
+          </Route>
+          <Route path="/lesson" element={<Layout />}>
+            <Route path="courses" element={<Courses />} />
+            <Route path="course/:courseid" element={<Course />} />
+            <Route path="lesson/:lessonid" element={<Lesson />} />
           </Route>
           <Route path="/event/preview/:id" element={<EventPreview />} />          
           <Route path="/activity/:id" element={<EventPreview />} />   

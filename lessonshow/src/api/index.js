@@ -39,6 +39,8 @@ const apis = {
     loadResources:(type,resourcetype,page,pagesize,countdata,headers) => api.get(`/home/loadresources?type=`+type+`&resource_type=`+resourcetype+`&page=`+page+'&pagesize='+pagesize+'&countdata='+countdata+`&time=`+Date.now(),headers),
     //pay
     setupPay:(id,code,headers)=>api.post('/event/setuppay',{id:id,code:code},headers),
+    //lesson
+    lessonGet:(id,headers)=>api.get('/lesson/lesson?id='+id,headers),
 }
 
 export default apis

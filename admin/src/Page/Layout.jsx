@@ -77,7 +77,7 @@ function DashboardContent() {
                 }
             }
         }
-        console.log(funcs)
+        //console.log(funcs)
         setSideMenuData(funcs)
     }
     useEffect(()=>{

@@ -207,6 +207,20 @@ const apis = {
     areaGet:(id,headers)=>api.get('/setting/area?id='+id,headers),
     areaDelete:(id,headers)=>api.delete('/setting/area?id='+id,headers),
     areaPut:(data,headers) => api.put('/setting/area',data,headers),
+
+    courses:(headers)=>api.get('/lesson/courses',headers),
+    courseGet:(id,lesson,headers)=>api.get('/lesson/course?id='+id+(lesson?('&lesson='+lesson):''),headers),
+    coursePost:(data,headers)=>api.post('/lesson/course',data,headers),
+    coursePut:(data,headers)=>api.put('/lesson/course',data,headers),
+    courseDelete:(id,headers)=>api.delete('/lesson/course?id='+id,headers),
+    lessonGet:(id,content,headers)=>api.get('/lesson/lesson?id='+id+(content?('&content='+content):''),headers),
+    lessonPost:(data,headers)=>api.post('/lesson/lesson',data,headers),
+    lessonPut:(data,headers)=>api.put('/lesson/lesson',data,headers),
+    lessonDelete:(id,headers)=>api.delete('/lesson/lesson?id='+id,headers),
+    
+    lessonpagePost:(data,headers)=>api.post('/lesson/lessonpage',data,headers),
+    lessonpagePut:(data,headers)=>api.put('/lesson/lessonpage',data,headers),
+    lessonpageDelete:(id,headers)=>api.delete('/lesson/lessonpage?id='+id,headers),
 }
 
 export default apis

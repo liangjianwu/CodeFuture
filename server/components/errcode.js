@@ -143,7 +143,11 @@ const ErrorMsg = {
     err800001:'The schedule does not exists',
 
     //pay
-    
+    //lesson
+    err800001:'Course is already exists',
+    err800002:'Course is not exists',
+    err800003:'Lesson is not exists',
+    err800004:'Lesson page is not exists',
 }
 
 const errorMsg = (code,msg)=>{

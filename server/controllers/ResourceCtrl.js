@@ -21,7 +21,7 @@ module.exports.upload = async (req, res) => {
                     return returnError(res, 920005)
                 }
                 let newfilename = Date.now() + '.' + suffix;
-                let newpath = pathlib.resolve('./test/upload/' + newfilename)
+                let newpath = pathlib.resolve('./upload/' + newfilename)
                 fs.rename(oldpath, newpath, async function (err) {
                     try {
                         if (err) {
@@ -92,7 +92,7 @@ module.exports.photo = {
             return returnError(res, 900001)
         }
         // res.setHeader("Content-Type", "image/jpeg,image/png")
-        res.sendFile(pathlib.resolve('/home/rcboy_liang/codefuture/www/server/upload/' + file))
+        res.sendFile(pathlib.resolve('./upload/' + file))
 
     }
 }

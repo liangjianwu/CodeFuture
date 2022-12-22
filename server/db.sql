@@ -90,3 +90,40 @@ ADD COLUMN `area_id` INT NULL DEFAULT 0 AFTER `publish_status`;
 
 ALTER TABLE `clubsaas`.`product` 
 ADD COLUMN `area_id` INT NULL DEFAULT 0 AFTER `minutes`;
+
+
+
+CREATE TABLE `clubsaas`.`course` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(45) NULL,
+  `description` TEXT NULL,
+  `status` INT NULL DEFAULT 0,
+  `mid` INT NULL DEFAULT 0,
+  `lessonhours` int null default 0,
+  `create_time` TIMESTAMP NULL DEFAULT current_timestamp,
+  `update_time` VARCHAR(45) NULL,
+  PRIMARY KEY (`id`));
+
+CREATE TABLE `clubsaas`.`lesson` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `course_id` int not null default 0,
+  `name` VARCHAR(45) NULL,
+  `description` TEXT NULL,  
+  `status` INT NULL DEFAULT 0,
+  `mid` INT NULL DEFAULT 0,
+  `lessonNo` int null default 0,
+  `create_time` TIMESTAMP NULL DEFAULT current_timestamp,
+  `update_time` VARCHAR(45) NULL,
+  PRIMARY KEY (`id`));
+
+CREATE TABLE `clubsaas`.`lesson_page` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `lesson_id` int not null default 0,
+  `title` varchar(64) not null,
+  `content` text NULL,
+  `pageNo` int null default 0,
+  `status` INT NULL DEFAULT 0,
+  `mid` INT NULL DEFAULT 0,  
+  `create_time` TIMESTAMP NULL DEFAULT current_timestamp,
+  `update_time` VARCHAR(45) NULL,
+  PRIMARY KEY (`id`));

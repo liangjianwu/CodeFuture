@@ -13,5 +13,6 @@ module.exports = db.defineModel('coach', {
     currentminutes:db.Sequelize.INTEGER,
     currentmonth:db.Sequelize.STRING(10),
     expired_time:db.Sequelize.BIGINT,
+    type:db.Sequelize.INTEGER,
 });
 

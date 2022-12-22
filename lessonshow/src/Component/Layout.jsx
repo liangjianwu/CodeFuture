@@ -1,16 +1,14 @@
 
 import { Container, Box, Typography, } from "@mui/material"
-import { useEffect, useState } from "react"
-import { Outlet, useNavigate } from "react-router"
+import { Outlet } from "react-router"
 import { getUserSession } from "../Utils/Common"
 import TopBar from "./TopBar"
 
 
 const Layout = () => {
-    const navigate = useNavigate()
 
     const session = getUserSession()
-    if (session && session.email_verified == 0 && window.location.pathname.substring(0, 5) != '/user') {
+    if (session && session.email_verified === 0 && window.location.pathname.substring(0, 5) !== '/user') {
         window.location.href = '/user/emailverify'
         return <></>
     }

@@ -127,8 +127,6 @@ module.exports.loadFamilys = {
                 where: where,
                 include: [
                     { model: UserProfile, attributes: ['user_id', 'name', 'phone'] },
-                    // { model: UserBalance, where: { status: 1 }, attributes: ['balance', 'type', 'member_id', 'update_time'], required: false },
-                    //{ model: Member, attributes: ['id', 'name'], where: { status: 1, mid: req.mid }, required: false },                
                 ],
                 order: orderdesc,
                 limit: pagesize, offset: page * pagesize,
@@ -143,10 +141,6 @@ module.exports.loadFamilys = {
                     where: { user_id: ids, status: { [op.ne]: 3 } } ,
                     include:[{model:BalanceType,attributes:['type','id'],required:false},],
             })
-            // ret.balance = await UserBalance.sum('balance', {
-            //     where: { mid: req.mid, status: 1 },
-            //     //attributes: [[db.Sequelize.fn('sum', db.Sequelize.col('balance')), 'balance']]
-            // })
             return returnResult(res, ret)
         })
     }
@@ -200,48 +194,48 @@ module.exports.userbalance = {
         })
     }
 }
-module.exports.recharge = async (req, res) => {
-    let { customerid, familyid, amount, type, note, date, invoice } = req.body
-    return doWithTry(res, async () => {
-        if (familyid == 0) {
-            let where = { mid: req.mid, id: customerid, status: { [op.ne]: 3 } }
-            let mc = await Member.findOne({ where: where })
-            if (!mc) {
-                return returnError(res, 400006)
-            }
-            familyid = mc.user_id
-        }
-        let w = { mid: req.mid, user_id: familyid, type: type, member_id: 0 }
-        let mcb = await UserBalance.findOne({ where: w })
-        let originalBalance = 0
-        if (!mcb) {
-            w.balance = amount
-            w.member_id = 0
-            mcb = await UserBalance.create(w)
-        } else {
-            originalBalance = mcb.balance
-            mcb.balance = Number(mcb.balance) + Number(amount)
-            await mcb.save()
-        }
-        let order = await UserOrder.create({
-            mid: req.mid,
-            user_id: familyid,
-            member_id: 0,
-            member_name: '',
-            product_id: 0,
-            product_name: 'recharge',
-            product_price: amount,
-            coach_id: 0,
-            count: 0,
-            amount: amount,
-            charge: 0,
-            order_date: new Date(date),
-        })
-        await UserBalanceRecord.create({ user_id: familyid, member_id: 0, mid: req.mid, balance_id: mcb.id, amount: amount, order: order.id, pre_balance: originalBalance, action: 'recharge', invoice: invoice ? invoice : '', note: note ? note : type, ip: req.requestIp })
+// module.exports.recharge = async (req, res) => {
+//     let { customerid, familyid, amount, type, note, date, invoice } = req.body
+//     return doWithTry(res, async () => {
+//         if (familyid == 0) {
+//             let where = { mid: req.mid, id: customerid, status: { [op.ne]: 3 } }
+//             let mc = await Member.findOne({ where: where })
+//             if (!mc) {
+//                 return returnError(res, 400006)
+//             }
+//             familyid = mc.user_id
+//         }
+//         let w = { mid: req.mid, user_id: familyid, type: type, member_id: 0 }
+//         let mcb = await UserBalance.findOne({ where: w })
+//         let originalBalance = 0
+//         if (!mcb) {
+//             w.balance = amount
+//             w.member_id = 0
+//             mcb = await UserBalance.create(w)
+//         } else {
+//             originalBalance = mcb.balance
+//             mcb.balance = Number(mcb.balance) + Number(amount)
+//             await mcb.save()
+//         }
+//         let order = await UserOrder.create({
+//             mid: req.mid,
+//             user_id: familyid,
+//             member_id: 0,
+//             member_name: '',
+//             product_id: 0,
+//             product_name: 'recharge',
+//             product_price: amount,
+//             coach_id: 0,
+//             count: 0,
+//             amount: amount,
+//             charge: 0,
+//             order_date: new Date(date),
+//         })
+//         await UserBalanceRecord.create({ user_id: familyid, member_id: 0, mid: req.mid, balance_id: mcb.id, amount: amount, order: order.id, pre_balance: originalBalance, action: 'recharge', invoice: invoice ? invoice : '', note: note ? note : type, ip: req.requestIp })
 
-        return returnResult(res, { type: type, balance: mcb.balance })
-    })
-}
+//         return returnResult(res, { type: type, balance: mcb.balance })
+//     })
+// }
 module.exports.editTransaction = async (req, res) => {
     const { note, id, invoice, order_date, peoples } = req.body
     return doWithTry(res, async () => {

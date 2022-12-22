@@ -1,7 +1,6 @@
 const express = require('express')
 const fs = require('fs');
 const { validationResult } = require("express-validator")
-const { Debug } = require('../components');
 
 const getValidatorErrorResult = (errors)=>{
     for(let i in errors) {
@@ -37,7 +36,7 @@ const checkValidateRouter = (req,res,action) =>{
     return action(req,res)
 }
 
-let controllers = fs.readdirSync(__dirname + '/../controllers');
+let controllers = fs.readdirSync(__dirname + '/controllers');
 let ctrl_files = controllers.filter((f) => {
     return f.endsWith('.js');
 }, controllers);
@@ -46,10 +45,10 @@ module.exports.routers = [];
 
 for (let f of ctrl_files) {        
     let modulename = f.substring(0, f.length - 7).toLowerCase(); 
-    Debug("Load router:" + modulename)
-    let c = require(__dirname + '/../controllers/' + f);
-    let v = fs.existsSync(__dirname + '/../controllers/validate/' + modulename+'.js')?
-                    require(__dirname + '/../controllers/validate/' + modulename):undefined;
+    //Debug("Load router:" + modulename)
+    let c = require(__dirname + '/controllers/' + f);
+    let v = fs.existsSync(__dirname + '/controllers/validate/' + modulename+'.js')?
+                    require(__dirname + '/controllers/validate/' + modulename):undefined;
     let m = {
         module:modulename,
         router:express.Router()
